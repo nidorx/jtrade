@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+
+<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="500.0" minWidth="800.0" prefHeight="508.0" prefWidth="959.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:id="hBox">
+   <children>
+      <ListView fx:id="listView" prefHeight="200.0" prefWidth="200.0" />
+      <LineChart fx:id="lineChart" alternativeColumnFillVisible="true" animated="false" centerShape="false" createSymbols="false" prefHeight="522.0" prefWidth="766.0" scaleShape="false" title="Titulo" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+        <xAxis>
+          <NumberAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis side="LEFT" />
+        </yAxis>
+      </LineChart>
+   </children>
+</HBox>
