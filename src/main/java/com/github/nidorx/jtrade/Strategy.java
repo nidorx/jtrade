@@ -6,6 +6,7 @@ import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.broker.Instrument;
 
 /**
+ * Representação de uma estratégia de negociação. Pode ser comparado a um Expert Advisor do MT5 por exemplo
  *
  * @author Alex
  */
@@ -68,12 +69,6 @@ public abstract class Strategy {
         this.instrument = instrument;
     }
 
-    /**
-     * Remove um handle deste indicador e libera o bloco de cálculo.
-     *
-     * Ao fazer isso, este indicador deixa de receber atualizações do {@link TimeSeries} e portanto, não realiza mais
-     * calculos
-     */
     /**
      * Remove o handle de execução e contexto desta estratégia.
      *

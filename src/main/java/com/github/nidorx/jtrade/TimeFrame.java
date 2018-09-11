@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade;
 
 /**
- * Timeframes padrão
+ * Representação dos Timeframes padrão
  *
  * @author Alex
  */

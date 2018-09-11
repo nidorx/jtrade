@@ -12,4 +12,10 @@ Bilioteca Java para criação de aplicações de Backtesting, Análise Técnica 
 - Strategy.java
 
 
-### Candlestick.java
+### Candlestick
+
+Permite trabalhar com padrões de candles.
+
+Todos os padrões de Candlestick implementado são Predicate de OHLC ou <List<OHLC>>, isso facilita a implementação
+de lógicas de comparação de candles.
+

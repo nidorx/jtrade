@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade;
 
 /**
- * Armazena as informações sobre Preço e Volumes de um ativo
+ * Armazena as informações sobre Preço de um ativo
  *
  * @author Alex
  */

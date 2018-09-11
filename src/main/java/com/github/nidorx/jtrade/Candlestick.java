@@ -283,167 +283,167 @@ public final class Candlestick {
     };
 
     public static final Predicate<List<OHLC>> DOJI = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> DRAGONFLY_DOJI = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> GRAVESTONE_DOJI = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> LONG_LEGGED_DOJI = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> HANGING_MAN = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> HAMMER = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> INVERTED_BLACK_HAMMER = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> INVERTED_HAMMER = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> LONG_LOWER_SHADOW = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> LONG_UPPER_SHADOW = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> MARUBOZU = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> SHOOTING_STAR = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> SPINNING_TOP = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> WHITE_BODY = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> SHAVEN_BOTTOM = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> SHAVEN_HEAD = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> BEARISH_HARAMI = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> BEARISH_HARAMI_CROSS = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> BEARISH_3_METHOD_FORMATION = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> BULLISH_3_METHOD_FORMATION = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> BULLISH_HARAMI = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> BULLISH_HARAMI_CROSS = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> DARK_CLOUD_COVER = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> ENGULFING_BEARISH_LINE = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> ENGULFING_BULLISH = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> EVENING_DOJI_STAR = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> FALLING_WINDOW = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> MORNING_DOJI_STAR = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> MORNING_STAR = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> ON_NECKLINE = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> TWO_BLACK_GAPPING = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> THREE_BLACK_CROWS = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> THREE_WHITE_SOLDIERS = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> THREE_LINE_STRIKE = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> TWEEZER_BOTTOMS = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> TWEEZER_TOPS = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> DOJI_STAR = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> PIERCING_LINE = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> RISING_WINDOW = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> EVENING_STAR = (rates) -> {
-        return true;
+        return false;
     };
 
     public static final Predicate<List<OHLC>> ABANDONED_BABY = (rates) -> {
-        return true;
+        return false;
     };
 
     /**
@@ -525,12 +525,7 @@ public final class Candlestick {
      * @param period
      * @return
      */
-    private static double cached(
-            String method,
-            List<OHLC> rates,
-            int period,
-            Supplier<Double> exec
-    ) {
+    private static double cached(final String method, final List<OHLC> rates, final int period, final Supplier<Double> exec) {
         String key = method + "_" + rates.hashCode() + "_" + period;
         Double value = CACHE_RESULT.get(key);
         if (value == null) {

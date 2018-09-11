@@ -22,7 +22,7 @@ import java.util.stream.StreamSupport;
 /**
  * Permite trabalhar com séries temporais de ohlc.
  *
- * A ordenação do {@link TimeSeries} difere de um array de dados comum pela ORDENÇÃO REVERSA.
+ * A ordenação do {@link TimeSeries} difere de um array de dados comum pela ORDENAÇÃO REVERSA.
  *
  * <p>
  * Os elementos das séries temporais são indexados do final de um array para seu início (a partir do mais recente para o
