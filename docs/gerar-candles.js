@@ -3,13 +3,21 @@
 /***
  * Utilitário para geração das imagens dos candles usados na documentação
  * 
- * Executar no terminal "node gerar-svg-candles.js"
+ * Executar no terminal "node gerar-candles.js"
  */
 
 const fs = require('fs');
+const path = require('path');
+const child_process = require('child_process');
+
+// Diretório de entrada, onde os arquivos .svg estão
+const SVG_PATH_INPUT = path.normalize(__dirname + '/candles/svg/');
+
+// Diretório de saída, dos arquivos png
+const PNG_PATH_OUTPUT = path.normalize(__dirname + '/candles/png/');
 
 // Espaço entra os candles
-const GAP = 4;
+const GAP = 5;
 
 // Largura do corpo do candle
 const CANDLE_WIDTH = 10;
@@ -27,10 +35,6 @@ const CHART_HEIGHT = 100;
 const UPTREND = 'UPTREND';
 
 const DOWNTREND = 'DOWNTREND';
-
-const UPTREND_COLOR = '#1F8A25';
-
-const DOWNTREND_COLOR = '#7F0100';
 
 // Todos os candles documentados
 const CANDLES = {
@@ -59,8 +63,11 @@ for (var name in CANDLES) {
     if (!CANDLES.hasOwnProperty(name)) {
         continue;
     }
-    fs.writeFileSync(__dirname + '/' + name + '.svg', candlestickSVG(toTicks(CANDLES[name])));
+    fs.writeFileSync(path.join(SVG_PATH_INPUT, name + '.svg'), candlestickSVG(toTicks(CANDLES[name])));
 }
+
+// Gera arquivos png
+convertAllSvgFromDirToPng(SVG_PATH_INPUT);
 
 
 function toTicks(values) {
@@ -110,7 +117,6 @@ function candlestickSVG(ticks) {
         '  version="1.1"',
         '  xmlns="http://www.w3.org/2000/svg"',
         '  xmlns:xlink="http://www.w3.org/1999/xlink"',
-//        '  style="width: ' + CHART_WIDTH + 'px; height: ' + CHART_HEIGHT + 'px; top: 0px; left: -0.5px;"',
         '  x="0px" y="0px" width="' + CHART_WIDTH + 'px" height="' + CHART_HEIGHT + 'px"',
         '  >',
         // Background
@@ -151,7 +157,6 @@ function candlestickSVG(ticks) {
                 var tickSkip = skip;
                 if (ticks[0].TREND && !tick.TREND) {
                     // Melhoria no alinhamento
-//                    tickSkip -= CANDLE_TREND_WIDTH;
                     tickSkip -= 3 * (CANDLE_WIDTH - CANDLE_TREND_WIDTH);
                 }
 
@@ -179,7 +184,7 @@ function candlestickSVG(ticks) {
                             // BODY
                             '    <g transform="translate(' + bodyL + ',' + bodyT + ')">',
                             '        <path',
-                            '          d="M0.5,0.5 L0.5,' + bodyH + '.5 L' + CANDLE_WIDTH + '.5,' + bodyH + '.5 L' + CANDLE_WIDTH + ',0.5 L0.5,0.5 Z"',
+                            '          d="M0.5,0.5 L0.5,' + bodyH + '.5 L' + CANDLE_WIDTH + '.5,' + bodyH + '.5 L' + CANDLE_WIDTH + '.5,0.5 L0.5,0.5 Z"',
                             '          fill="' + color + '"',
                             '          stroke="' + color + '"',
                             '          stroke-width="1"',
@@ -208,3 +213,45 @@ function candlestickSVG(ticks) {
         '</svg>'
     ].join('').replace(/(\s+)/g, ' ').replace(/(>\s+<)/g, '><').replace(/(\s+>)/g, '>');
 }
+
+/**
+ * Converter ícones de SVG para PNG (node.js + Inkscape + pngquant)
+ * 
+ * https://gist.github.com/nidorx/b37fa46dc91e10ec750c2086995a5c30
+ * 
+ * - Instalar Inkscape e adicionar no PATH (C:\Program Files\Inkscape)
+ * - Baixar o pngquant.exe e copiar para o PATH (C:\windows) https://pngquant.org
+ * 
+ * @param {type} dir
+ * @returns {undefined}
+ */
+function convertAllSvgFromDirToPng(dir) {
+    const files = fs.readdirSync(dir);
+    files.forEach(name => {
+
+        const pathSVG = path.join(dir, name);
+        const pathPNG = pathSVG.replace(SVG_PATH_INPUT, PNG_PATH_OUTPUT);
+
+        const stats = fs.statSync(pathSVG);
+        if (stats.isDirectory()) {
+
+            // Cria o diretório png
+            if (!fs.existsSync(pathPNG)) {
+                fs.mkdirSync(pathSVG.replace(SVG_PATH_INPUT, PNG_PATH_OUTPUT));
+            }
+
+            convertAllSvgFromDirToPng(pathSVG);
+        } else if (name.endsWith('.svg')) {
+            const outPath = pathPNG.replace(/(\.svg$)/, '.png');
+            // Converte SVG to PNG
+            child_process.execSync(`inkscape -z -e "${outPath}" -w ${CHART_WIDTH} -h ${CHART_HEIGHT} "${pathSVG}"`, {stdio: [0, 1, 2]});
+
+            // Compressão da imagem, em 3 steps
+            child_process.execSync(`pngquant -f -v  --strip --quality=45-85 -o "${outPath}" "${outPath}"`, {stdio: [0, 1, 2]});
+            child_process.execSync(`pngquant -f -v  --strip --ordered --speed=1 --quality=50-90 -o "${outPath}" "${outPath}"`, {stdio: [0, 1, 2]});
+            child_process.execSync(`pngquant -f -v  --strip --ordered --speed=1 --quality=50-90 -o "${outPath}" "${outPath}"`, {stdio: [0, 1, 2]});
+        }
+    });
+}
+
+
