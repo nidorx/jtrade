@@ -104,10 +104,12 @@ function candlestickSVG(ticks) {
     const MAX_H = (CHART_HEIGHT - CANDLE_WIDTH);
 
     return [
+        '<?xml version="1.0" encoding="utf-8"?>',
         '<svg ',
         '  version="1.1"',
         '  xmlns="http://www.w3.org/2000/svg"',
-        '  style="width: ' + (CHART_WIDTH) + 'px; height: ' + CHART_HEIGHT + 'px; top: 0px; left: -0.5px;"',
+//        '  style="width: ' + CHART_WIDTH + 'px; height: ' + CHART_HEIGHT + 'px; top: 0px; left: -0.5px;"',
+        '  x="0px" y="0px" width="' + CHART_WIDTH + 'px" height="' + CHART_HEIGHT + 'px"',
         '  >',
         // Background
         '    <rect',

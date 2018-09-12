@@ -5,6 +5,12 @@ Abaixo está a documentação para todos os padrões de Candlestick identificáv
 
 ## Long White Candle
 
+<div align="center">
+    <img
+        src="https://github.com/nidorx/jtrade/raw/master/docs/LONG_WHITE_CANDLE.svg"
+        alt="Long White Candle" style="max-width:100%;">
+</div>
+
 Oposto de **Long Black Candle**
 
 ## Formação do padrão
