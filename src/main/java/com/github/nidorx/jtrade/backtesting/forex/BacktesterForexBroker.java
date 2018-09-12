@@ -35,8 +35,7 @@ import java.util.logging.Logger;
  *
  * A busca de dados é feito utilizando a api do Google Finance, o gerenciamento de posições e ordens é em memória
  *
- * https://www.mql5.com/en/docs/constants/structures/mqltraderequest 
- * https://book.mql4.com/appendix/limits
+ * https://www.mql5.com/en/docs/constants/structures/mqltraderequest https://book.mql4.com/appendix/limits
  * https://book.mql4.com/trading/orders
  *
  * @author Alex
@@ -187,7 +186,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
         ).entrySet().stream().forEach((t) -> {
             Instant instant = t.getKey();
             double[] val = t.getValue();
-            timeSeries.add(new OHLC(t.getKey().getEpochSecond(), val[0], val[1], val[2], val[3], val[4], val[4]));
+            timeSeries.add(new OHLC(t.getKey().getEpochSecond(), val[0], val[1], val[2], val[3]));
         });
 
         return timeSeries;
@@ -220,14 +219,12 @@ public class BacktesterForexBroker extends BacktesterBroker {
             // Inicializa a lista de instrumentos
             instruments.put(
                     "EURUSD",
-                    new Instrument(this, "EURUSD", 5, 100000, 0.00001, 1.0,
-                            Currency.getInstance("EUR"), Currency.getInstance("USD"))
+                    new Instrument(this, "EURUSD", Currency.getInstance("EUR"), Currency.getInstance("USD"), 5, 100000, 1.0)
             );
 
             instruments.put(
                     "USDJPY",
-                    new Instrument(this, "USDJPY", 3, 100000, 0.001, 1.0,
-                            Currency.getInstance("USD"), Currency.getInstance("JPY"))
+                    new Instrument(this, "USDJPY", Currency.getInstance("USD"), Currency.getInstance("JPY"), 3, 100000, 1.0)
             );
         }
         return new ArrayList<>(instruments.values());

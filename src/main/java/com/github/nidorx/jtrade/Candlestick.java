@@ -100,7 +100,7 @@ public final class Candlestick {
      * @see Candlestick#averageDistance(java.util.List, int)
      * @see Candlestick#size(info.alexrodin.ta.OHLC)
      */
-    private static final Predicate<List<OHLC>> LONG_LINE = (rates) -> {
+    public static final Predicate<List<OHLC>> LONG_LINE = (rates) -> {
         double avg = averageDistance(rates, 25);
         final OHLC ohlc = rates.get(0);
         return size(ohlc) >= avg * 0.7;
@@ -118,12 +118,12 @@ public final class Candlestick {
      * @see Candlestick#averageDistance(java.util.List, int)
      * @see Candlestick#size(info.alexrodin.ta.OHLC)
      */
-    private static final Predicate<List<OHLC>> SHORT_LINE = LONG_LINE.negate();
+    public static final Predicate<List<OHLC>> SHORT_LINE = LONG_LINE.negate();
 
     /**
      * O corpo da vela é três vezes maior do que a média do tamanho dos corpos das últimas 5 ou 10 velas
      */
-    private static final Predicate<List<OHLC>> LONG_CANDLE = (rates) -> {
+    public static final Predicate<List<OHLC>> LONG_CANDLE = (rates) -> {
         final int avgPeriod = 10;
 
         if (rates.size() < avgPeriod) {
