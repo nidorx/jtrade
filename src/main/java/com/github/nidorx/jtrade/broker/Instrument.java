@@ -2,7 +2,6 @@ package com.github.nidorx.jtrade.broker;
 
 import java.util.Currency;
 import lombok.AccessLevel;
-import lombok.Data;
 import lombok.Getter;
 
 /**

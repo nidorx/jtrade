@@ -1,7 +1,7 @@
-package com.github.nidorx.jtrade.broker;
+package com.github.nidorx.jtrade.broker.trading;
 
-import com.github.nidorx.jtrade.broker.enums.OrderType;
-import com.github.nidorx.jtrade.broker.enums.OrderState;
+import com.github.nidorx.jtrade.broker.Broker;
+import com.github.nidorx.jtrade.broker.Instrument;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,18 +21,35 @@ public class Order {
     @Getter(AccessLevel.NONE)
     private final Broker broker;
 
+    /**
+     * As transações executadas nesta ordem
+     */
     private final List<Deal> deals = new ArrayList<>();
 
     /**
-     * O identificador único da ordem
+     * O identificador único da ordem. Um número exclusivo atribuído a cada ordem
      */
     private final Long id;
 
-    private final OrderType type;
-
+    /**
+     * O instrumento de negociação da ordem
+     */
     private final Instrument instrument;
 
+    /**
+     * Tipo de ordem
+     */
+    private final OrderType type;
+
+    /**
+     * O estado de execução desta ordem
+     */
     private OrderState state;
+
+    /**
+     * A Política de execução da ordem
+     */
+    private OrderFilling filling;
 
     /**
      * O identificador da posição, quando a ordem é executada
@@ -40,21 +57,28 @@ public class Order {
     private Long position;
 
     /**
-     * O instante em que a ordem foi enviada
+     * O instante em que a ordem foi enviada, executada ou cancelada
      */
-    private Instant timeSetup;
+    private Instant time;
 
     /**
-     * O instante em que a ordem foi executada
+     * Preço especificado na ordem
      */
-    private Instant timeDone;
-
     private double price;
 
+    /**
+     * Volume corrente de uma ordem
+     */
     private double volume;
 
+    /**
+     * Valor de Stop Loss
+     */
     private double stopLoss;
 
+    /**
+     * Valor de Take Profit
+     */
     private double takeProfit;
 
     public Order(Broker broker, Long id, OrderType type, Instrument instrument, double price, double volume) {
@@ -86,16 +110,26 @@ public class Order {
         broker.modify(this, price, volume);
     }
 
-    public void modifyStop(Order order, double sl, double tp) throws TradeException {
-        broker.modifyStop(this, sl, tp);
-    }
-
     public void modify(double price, double volume, double sl, double tp) throws TradeException {
         broker.modify(this, price, volume, sl, tp);
+    }
+
+    public void modifyStop(double sl, double tp) throws TradeException {
+        broker.modifyStop(this, sl, tp);
     }
 
     public void remove() throws TradeException {
         broker.remove(this);
     }
 
+    /**
+     * Calcula o lucro/prejuizo dessa ordem
+     *
+     * @return
+     */
+    public double profit() {
+        return deals.stream()
+                .mapToDouble(deal -> deal.getProfit())
+                .sum();
+    }
 }

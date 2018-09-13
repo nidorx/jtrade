@@ -1,8 +1,9 @@
-package com.github.nidorx.jtrade.broker.enums;
+package com.github.nidorx.jtrade.broker.trading;
 
 /**
+ * Representação dos tipos de Ordem existentes, usados ao enviar uma solicitação de negociação
  *
- * @author Alex
+ * @author Alex Rodin <contato@alexrodin.info>
  */
 public enum OrderType {
     /**
@@ -38,6 +39,11 @@ public enum OrderType {
      */
     SELL_STOP_LIMIT;
 
+    /**
+     * Verifica se é uma ordem de compra
+     *
+     * @return
+     */
     public boolean isBuy() {
         return this.equals(BUY) || this.equals(BUY_LIMIT) || this.equals(BUY_STOP) || this.equals(BUY_STOP_LIMIT);
     }

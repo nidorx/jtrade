@@ -1,10 +1,9 @@
-package com.github.nidorx.jtrade.broker;
+package com.github.nidorx.jtrade.broker.trading;
 
-import com.github.nidorx.jtrade.broker.enums.DealType;
-import com.github.nidorx.jtrade.broker.enums.OrderType;
-import com.github.nidorx.jtrade.broker.enums.PositionType;
-import com.github.nidorx.jtrade.broker.enums.OrderState;
+import com.github.nidorx.jtrade.broker.Broker;
+import com.github.nidorx.jtrade.broker.Instrument;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -27,19 +26,29 @@ public class Position {
     private final Broker broker;
 
     /**
-     * As ordens executadas nesta operação.
+     * O identificador dessa posição. Um número exclusivo atribuído a cada posição.
      *
-     * Pode existir por exemplo uma ordem de venda, e apos alguns segundos executado outra ordem de vendad
-     *
-     * Formato: Instant -> Order
+     * O Identificador de posição é um número único que é atribuído para toda nova posição aberta e não se altera
+     * durante todo o tempo de vida da posição. Movimentações de uma posição não alteram seu identificador.
      */
-    private final List<Order> orders = new ArrayList<>();
-
     private final Long id;
 
-    private final Instrument instrument;
+    /**
+     * As ordens executadas nesta operação.
+     *
+     * Pode existir por exemplo uma ordem de venda, e apos alguns segundos executado outra ordem de compra
+     */
+    private final List<Order> orders;
 
+    /**
+     * A direção de da posição em aberto (comprada ou vendida)
+     */
     private final PositionType type;
+
+    /**
+     * O instante em que a ordem foi enviada, executada ou cancelada
+     */
+    private Instant time;
 
     /**
      * O preço de abertura da posição
@@ -50,19 +59,19 @@ public class Position {
 
     private double takeProfit;
 
-    public Position(Broker broker, Long id, PositionType type, Instrument instrument, double price) {
+    public Position(Broker broker, Long id, List<Order> orders, PositionType type, double price) {
         this.broker = broker;
         this.id = id;
+        this.orders = new ArrayList<>(orders);
         this.type = type;
-        this.instrument = instrument;
         this.price = price;
     }
 
-    public Position(Broker broker, Long id, PositionType type, Instrument instrument, double price, double stopLoss, double takeProfit) {
+    public Position(Broker broker, Long id, List<Order> orders, PositionType type, double price, double stopLoss, double takeProfit) {
         this.broker = broker;
         this.id = id;
+        this.orders = new ArrayList<>(orders);
         this.type = type;
-        this.instrument = instrument;
         this.price = price;
         this.stopLoss = stopLoss;
         this.takeProfit = takeProfit;
@@ -80,24 +89,24 @@ public class Position {
         broker.modify(this, sl, tp);
     }
 
-    public void close(Position position, double price, long deviation) throws TradeException {
+    public void close(double price, long deviation) throws TradeException {
         broker.close(this, price, deviation);
     }
 
-    public void closePartial(Position position, double price, double volume, long deviation) throws TradeException {
+    public void closePartial(double price, double volume, long deviation) throws TradeException {
         broker.closePartial(this, price, volume, deviation);
     }
 
     /**
-     * Calcula o volume sendo negociado atualmente. Somente dos valores já executados das ordens desta posição
+     * Calcula o volume sendo negociado atualmente.
+     *
+     * Somente dos valores já executados das ordens desta posição
      *
      * @return
      */
     public double volume() {
         double volume = orders.stream()
-                .filter((order) -> {
-                    return order.getState() == OrderState.FILLED;
-                })
+                .filter((order) -> order.getState().filled())
                 .mapToDouble((order) -> {
                     return order.getDeals().stream()
                             .mapToDouble((deal) -> {
@@ -112,6 +121,27 @@ public class Position {
                 .sum();
         return (type == PositionType.SELL) ? (volume * -1) : volume;
     }
+
+    /**
+     * Obtém o instrumento de negociação desta posição
+     *
+     * @return
+     */
+    public Instrument instrument() {
+        return orders.stream().findFirst().get().getInstrument();
+    }
+
+    /**
+     * Calcula o lucro/prejuizo da operação atual
+     *
+     * @return
+     */
+    public double profit() {
+        return orders.stream()
+                .mapToDouble(order -> order.profit())
+                .sum();
+    }
+
     /**
      * Verifica se todas as ordens desta posição estão fechadas
      *
@@ -121,16 +151,5 @@ public class Position {
 //        return orders.stream()
 //                .filter((o) -> !OrderState.CLOSED.equals(o.getState()))
 //                .count() == 0;
-//    }
-    /**
-     * Calcula o lucro/prejuizo da operação atual a partir do preço informado
-     *
-     * @param price
-     * @return
-     */
-//    public double profit(double price) {
-//        return orders.stream()
-//                .mapToDouble(order -> order.profit(price))
-//                .sum();
 //    }
 }

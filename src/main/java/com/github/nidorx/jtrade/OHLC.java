@@ -1,5 +1,8 @@
 package com.github.nidorx.jtrade;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Armazena as informações sobre Preço de um ativo
  *
@@ -33,6 +36,12 @@ public class OHLC {
      * Preço de fechamento
      */
     public final double close;
+
+    /**
+     * Permite adicionar metatags a essa instancia. Pode ser usado por exemplo por indicadores ou Candlestick para
+     * informar que este item já foi processado pelo algoritmo, evitando processamento desnecessário.
+     */
+    public final Map<String, Object> meta = new HashMap<>();
 
     public OHLC(long time, double open, double high, double low, double close) {
         this.time = time;

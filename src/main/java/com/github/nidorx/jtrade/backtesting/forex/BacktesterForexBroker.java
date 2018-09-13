@@ -6,14 +6,14 @@ import com.github.nidorx.jtrade.Strategy;
 import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.backtesting.BacktesterBroker;
 import com.github.nidorx.jtrade.broker.Account;
-import com.github.nidorx.jtrade.broker.Deal;
-import com.github.nidorx.jtrade.broker.Order;
-import com.github.nidorx.jtrade.broker.enums.OrderState;
-import com.github.nidorx.jtrade.broker.enums.OrderType;
-import com.github.nidorx.jtrade.broker.Position;
-import com.github.nidorx.jtrade.broker.enums.DealEntry;
-import com.github.nidorx.jtrade.broker.enums.DealType;
-import com.github.nidorx.jtrade.broker.enums.PositionType;
+import com.github.nidorx.jtrade.broker.trading.Deal;
+import com.github.nidorx.jtrade.broker.trading.Order;
+import com.github.nidorx.jtrade.broker.trading.OrderState;
+import com.github.nidorx.jtrade.broker.trading.OrderType;
+import com.github.nidorx.jtrade.broker.trading.Position;
+import com.github.nidorx.jtrade.broker.trading.DealEntry;
+import com.github.nidorx.jtrade.broker.trading.DealType;
+import com.github.nidorx.jtrade.broker.trading.PositionType;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.exception.TradeExceptionReason;
 import com.github.nidorx.jtrade.broker.Instrument;
@@ -324,7 +324,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
         if (order.getType().isBuy()) {
             if (position.getType().equals(PositionType.BUY)) {
                 // Incremento de compra na posição aberta
-                final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), position.getId(), instant, DealType.BUY, DealEntry.IN, ask, volume);
+                final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), instant, DealType.BUY, DealEntry.IN, ask, volume, 0.0, 0.0, 0.0);
                 order.setState(OrderState.FILLED);
                 order.addDeal(deal);
                 position.addOrder(order);
@@ -336,13 +336,13 @@ public class BacktesterForexBroker extends BacktesterBroker {
                 final double volumePos = position.volume();
                 if (volumePos > volume) {
                     // SAÍDA PARCIAL
-                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), position.getId(), instant, DealType.BUY, DealEntry.OUT, ask, volume);
+                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), instant, DealType.BUY, DealEntry.OUT, ask, volume, 0.0, 0.0, 0.0);
                     order.setState(OrderState.FILLED);
                     order.addDeal(deal);
                     position.addOrder(order);
                 } else {
                     // @TODO: DealEntry.OUT ou DealEntry.OUTby?
-                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), position.getId(), instant, DealType.BUY, DealEntry.OUT, ask, volumePos);
+                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), instant, DealType.BUY, DealEntry.OUT, ask, volumePos, 0.0, 0.0, 0.0);
                     order.setState(OrderState.FILLED);
                     order.addDeal(deal);
                     position.addOrder(order);
@@ -360,7 +360,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
         } else {
             if (position.getType().equals(PositionType.SELL)) {
                 // Incremento de compra na posição aberta
-                final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), position.getId(), instant, DealType.SELL, DealEntry.IN, bid, volume);
+                final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), instant, DealType.SELL, DealEntry.IN, bid, volume, 0.0, 0.0, 0.0);
                 order.setState(OrderState.FILLED);
                 order.addDeal(deal);
                 position.addOrder(order);
@@ -372,7 +372,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
                 final double volumePos = position.volume();
                 if (volumePos > volume) {
                     // SAÍDA PARCIAL
-                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), position.getId(), instant, DealType.SELL, DealEntry.OUT, bid, volume);
+                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), instant, DealType.SELL, DealEntry.OUT, bid, volume, 0.0, 0.0, 0.0);
                     order.setState(OrderState.FILLED);
                     order.addDeal(deal);
                     position.addOrder(order);
@@ -380,7 +380,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
                 } else {
                     // FECHA A POSIÇÃO
                     // @TODO: DealEntry.OUT ou DealEntry.OUTby?
-                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), position.getId(), instant, DealType.SELL, DealEntry.OUT, bid, volumePos);
+                    final Deal deal = new Deal(SEQ.incrementAndGet(), order.getId(), instant, DealType.SELL, DealEntry.OUT, bid, volumePos, 0.0, 0.0, 0.0);
                     order.setState(OrderState.FILLED);
                     order.addDeal(deal);
                     position.addOrder(order);
@@ -724,7 +724,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
 
             // Fecha a posição
             final Order order = new Order(this, id, OrderType.SELL, instrument, bid, volume);
-            final Deal deal = new Deal(id, id, position.getId(), instant, DealType.SELL, DealEntry.OUT, bid, volume);
+            final Deal deal = new Deal(id, id, instant, DealType.SELL, DealEntry.OUT, bid, volume, 0.0, 0.0, 0.0);
             order.setState(OrderState.FILLED);
             order.addDeal(deal);
             position.addOrder(order);
@@ -738,7 +738,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
 
             // Fecha a posição
             final Order order = new Order(this, id, OrderType.BUY, instrument, ask, volume);
-            final Deal deal = new Deal(id, id, position.getId(), instant, DealType.BUY, DealEntry.OUT, ask, volume);
+            final Deal deal = new Deal(id, id, instant, DealType.BUY, DealEntry.OUT, ask, volume, 0.0, 0.0, 0.0);
             order.setState(OrderState.FILLED);
             order.addDeal(deal);
             position.addOrder(order);
@@ -773,7 +773,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
 
             // Fechamento parcial da posição
             final Order order = new Order(this, id, OrderType.SELL, instrument, bid, volume);
-            final Deal deal = new Deal(id, id, position.getId(), instant, DealType.SELL, DealEntry.OUT, bid, volume);
+            final Deal deal = new Deal(id, id, instant, DealType.SELL, DealEntry.OUT, bid, volume, 0.0, 0.0, 0.0);
             order.setState(OrderState.FILLED);
             order.addDeal(deal);
             position.addOrder(order);
@@ -785,7 +785,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
 
             // Fecha a posição
             final Order order = new Order(this, id, OrderType.BUY, instrument, ask, volume);
-            final Deal deal = new Deal(id, id, position.getId(), instant, DealType.BUY, DealEntry.OUT, ask, volume);
+            final Deal deal = new Deal(id, id, instant, DealType.BUY, DealEntry.OUT, ask, volume, 0.0, 0.0, 0.0);
             order.setState(OrderState.FILLED);
             order.addDeal(deal);
             position.addOrder(order);

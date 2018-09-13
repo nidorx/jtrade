@@ -1,5 +1,7 @@
 package com.github.nidorx.jtrade.broker;
 
+import com.github.nidorx.jtrade.broker.trading.Position;
+import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.util.Cancelable;
 import com.github.nidorx.jtrade.util.TrheeConsumer;
 import com.github.nidorx.jtrade.OHLC;

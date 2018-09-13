@@ -2,9 +2,9 @@ package com.github.nidorx.jtrade.backtesting.forex;
 
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Instrument;
-import com.github.nidorx.jtrade.broker.Position;
-import com.github.nidorx.jtrade.broker.enums.OrderType;
-import com.github.nidorx.jtrade.broker.enums.PositionType;
+import com.github.nidorx.jtrade.broker.trading.Position;
+import com.github.nidorx.jtrade.broker.trading.OrderType;
+import com.github.nidorx.jtrade.broker.trading.PositionType;
 import java.util.Currency;
 import lombok.Data;
 

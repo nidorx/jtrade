@@ -1,8 +1,9 @@
-package com.github.nidorx.jtrade.broker.enums;
+package com.github.nidorx.jtrade.broker.trading;
 
 /**
+ * Os estados possíveis de uma ordem. Cada ordem tem um status que descreve o seu estado.
  *
- * @author Alex
+ * @author Alex Rodin <contato@alexrodin.info>
  */
 public enum OrderState {
     /**
@@ -45,5 +46,9 @@ public enum OrderState {
      * Ordem está sendo excluída (excluindo a partir do sistema de negociação)
      */
     REQUEST_CANCEL;
+
+    public boolean filled() {
+        return this == FILLED || this == PARTIAL;
+    }
 
 }
