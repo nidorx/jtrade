@@ -23,32 +23,18 @@ input ushort   ServerPort = 23456;  // Server port
 #define TIMER_FREQUENCY_MS    1000
 #define CRLF                  "\r\n"
 
-/**
- * Socket Server
- *
- * Todo o EA prove um socket, para permitir a conexão com o backend em Java.
- * 
- * Existe apenas um EA master, que roda na "ServerPort"
- */
-ServerSocket * glbServerSocket = NULL;
-
-/**
- * O número da porta onde este EA está servindo
- */
-int glbServerPort;
-
-/**
- * Socket Cliente
- *
- * Durante a criação do E.A, ele conecta-se ao primeiro EA criado é informa qual a porta que foi inicializado.
- *
- */
-ClientSocket * glbClientSocket = NULL;
+// --------------------------------------------------------------------
+// Comandos recebidos do cliente
+// 
+// No formato:
+// "<NUM_REQUISICAO>_<COD_COMANDO>_<PARAM_1>_<PARAM_2>_<PARAM_N>"
+// --------------------------------------------------------------------
+#define COMMAND_XPTO          "1"
 
 /**
  * Representa o tipo de cliente conectado
  */
-enum ClientType { EA, CLIENT, UNDEFINED};
+enum ClientType { CLIENT_TYPE_EA, CLIENT_TYPE_CLIENT, CLIENT_TYPE_UNDEFINED };
 
 /**
  * Representa uma conexão cliente
@@ -65,6 +51,27 @@ struct Client {
 };
 
 /**
+ * O número da porta onde este EA está servindo
+ */
+int glbServerPort;
+
+/**
+ * Socket Server
+ *
+ * Todo o EA prove um socket, para permitir a conexão com o backend em Java.
+ * 
+ * Existe apenas um EA master, que roda na "ServerPort"
+ */
+ServerSocket * glbServerSocket = NULL;
+
+/**
+ * Socket Cliente
+ *
+ * Durante a criação do E.A, ele conecta-se ao primeiro EA criado e informa qual a porta que foi inicializado.
+ */
+ClientSocket * glbClientSocket = NULL;
+
+/**
  * A lista de clientes deste E.A
  */
 Client glbClients[];
@@ -73,7 +80,9 @@ Client glbClients[];
  * A lista com as portas dos outros servers (EA)
  *
  * O EA JTrade deve ser adicionado a cada gráfico desejado. 
- * Esse é o mecanismo de controle para permitir a sincronização entre os graficos
+ * Esse é o mecanismo de controle para permitir a sincronização entre os graficos.
+ *
+ * Se o MASTER cair, o server com a porta mais baixa vai tentar assumir o controle como master
  */
 int glbServers[];
 
@@ -210,55 +219,53 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 void acceptNewConnections() {
    // Continue aceitando todas as conexões pendentes até que Accept() retorne NULL
    
+   bool hasNewClient = false;
+
    while(true) {    
       Client client;  
       client.socket = glbServerSocket.Accept();
-      client.type = UNDEFINED;
+      client.type = CLIENT_TYPE_UNDEFINED;
       if (client.socket != NULL) {
+         hasNewClient = true;
+
          int sz = ArraySize(glbClients);
          ArrayResize(glbClients, sz + 1);
          glbClients[sz] = client;
          
          Print("JTrade: New client connection");
-         
-         // Envia imediatamente as portas para a conexão com outros gráficos         
-         sendServers(client);
       } else {
-          break;
+         break;
       }      
    };
-}
 
-
-/**
- * Envia a lista com as portas dos servidores para um cliente
- */
-void sendServers(Client& client){
-   int sz = ArraySize(glbServers);
-   if(sz > 0) {
-      
-      string message = "SERVERS_";
-      
-      for(int i=0; i<sz; i++) {
-         StringAdd(message, IntegerToString(glbServers[i]));
-         if(i < sz-1) {
-            StringAdd(message, ",");
-         }
-      }
-      
-      StringAdd(message, CRLF);    
-      
-      client.socket.Send(message);
-   }   
+   if(hasNewClient){
+      // Envia imediatamente as portas para a conexão com outros gráficos      
+      sendServersToAll();
+   }
 }
 
 
 /**
  * Envia a lista com as portas dos servidores para todos os clientes
  */
-void sendServersToAll(){
+void sendServersToAll() {
+   
+   string message = "SERVERS_";
+   StringAdd(message, IntegerToString(glbServerPort));
+   StringAdd(message, ",");
    for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
-      sendServers(glbClients[i]);
+      Client client = glbClients[i];
+      if(client.type == CLIENT_TYPE_EA){
+         StringAdd(message, IntegerToString(client.port));
+         if(i < sz-1) {
+            StringAdd(message, ",");
+         }
+      }
+   }
+   StringAdd(message, CRLF);    
+
+   for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
+      sendServers(glbClients[i].socket.Send(message));
    }
 }
 
@@ -277,34 +284,39 @@ void handleSocketIncomingData(int idxClient) {
    string line;
    string parts[];
    string command;
+   string request;
    int k;
    do {
+      // No formato: "<NUM_REQUISICAO>_<COD_COMANDO>_<PARAM_1>_<PARAM_2>_<PARAM_N>"
       line = client.socket.Receive(CRLF);               
       k = StringSplit(line, StringGetCharacter("_", 0), parts); 
       if(k > 0) {
-         command = parts[0];
+         request = parts[0];
          
-         if (command == "quote") {
-            client.socket.Send(Symbol() + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_BID), 6) + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_ASK), 6) + "\r\n");
+         // if (command == "quote") {
+         //    client.socket.Send(Symbol() + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_BID), 6) + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_ASK), 6) + CRLF);
    
-         }
-         else if (command == "CLOSE") {            
-            bForceClose = true;
-            
-         } 
-         else if (command == "I_AM_EA") {
+         // }
+         if (request == "I_AM_EA") {
             // Esse cliente é um EA
             int port = StringToInteger(parts[1]);
-            client.type = EA;
+            client.type = CLIENT_TYPE_EA;
             client.port = port;
             
             // Informa a todos os interessados sobre as portas dos EA
             sendServersToAll();
          } 
-         else if (command != "") {
-            // Potentially handle other commands etc here.
-            // For example purposes, we'll simply print messages to the Experts log
-            Print("<- ", command);
+         else if (request == "CLOSE") {            
+            bForceClose = true;
+            
+         } else if (k > 1){
+            command = parts[1];
+
+            switch(command) {
+               case COMMAND_XPTO: 
+                  client.socket.Send("#" + request + "#" + "Conteúdo da resposta qualquer" + CRLF);
+                  break;
+            } 
          }
       }      
    } while (line != "");
@@ -337,7 +349,7 @@ void handleSocketIncomingData(int idxClient) {
 void handleIncomingFromMaster() {
    
    if(glbClientSocket == NULL){
-      // Não está conectado
+      // Não está conectado, pode significar que esse cara é o server
       return;
    }   
 
@@ -373,6 +385,9 @@ void handleIncomingFromMaster() {
                while(!createServer(++serverPort)){
                   continue;
                }
+
+               // Informa ao MASTER sobre a porta deste EA
+               glbClientSocket.Send("I_AM_EA_" + IntegerToString(serverPort) + CRLF);
             }
          }
       }

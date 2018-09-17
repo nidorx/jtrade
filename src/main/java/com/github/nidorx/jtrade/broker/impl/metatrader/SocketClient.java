@@ -138,12 +138,12 @@ public class SocketClient extends Observable {
         REQUESTS.put(id, response);
 
         try {
-            outputStream.write((message + CRLF).getBytes());
+            outputStream.write(("" + id + " " + message + CRLF).getBytes());
             outputStream.flush();
         } catch (IOException ex) {
             notifyObservers(ex);
         }
-        
+
         // Aguarda a resposta do EA para continuar a execução
         response.await();
 
@@ -164,7 +164,7 @@ public class SocketClient extends Observable {
 
         if (args != null && args.length > 0) {
             for (Object arg : args) {
-                commandStr.append('\001').append(arg).append('\002');
+                commandStr.append('_').append(arg);
             }
         }
 
