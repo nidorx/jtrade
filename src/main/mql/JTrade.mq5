@@ -31,6 +31,13 @@ input ushort   ServerPort = 23456;  // Server port
 // --------------------------------------------------------------------
 #define COMMAND_XPTO          "1"
 
+
+// --------------------------------------------------------------------
+// Tópicos de subscrição
+// --------------------------------------------------------------------
+#define TOPIC_TICK         1  // Todos os ticks
+#define TOPIC_M1           2  // Fechamendo de candles no periodo M5
+
 /**
  * Representa o tipo de cliente conectado
  */
@@ -44,6 +51,8 @@ enum ClientType { CLIENT_TYPE_EA, CLIENT_TYPE_CLIENT, CLIENT_TYPE_UNDEFINED };
 struct Client { 
    // Número da porta, quando for outro server
    int port;
+   // Tópicos que o cliente está subscrito
+   int topics[];
    // O tipo de cliente conectado
    ClientType type;
    // A conexão com o cliente
@@ -145,6 +154,22 @@ void OnDeinit(const int reason) {
  */
 void OnTick() {
    if (!glbCreatedTimer) glbCreatedTimer = EventSetMillisecondTimer(TIMER_FREQUENCY_MS);
+
+   MqlTick tick;
+   if(SymbolInfoTick(Symbol(), tick)) {
+
+      // Publica os detalhes do tick
+      int isBuyOrSell = (tick.flags & TICK_FLAG_BUY) == TICK_FLAG_BUY ? 1 : (tick.flags & TICK_FLAG_SELL) == TICK_FLAG_SELL ? -1 : 0;
+      publishTick(tick.time_msc, tick.bid, tick.ask, tick.last, tick.volume, isBuyOrSell);
+
+      
+      // TICK_FLAG_LAST    – a tick has changed the last deal price
+      // TICK_FLAG_VOLUME  – a tick has changed a volume
+      // TICK_FLAG_BUY     – a tick is a result of a buy deal
+      // TICK_FLAG_SELL    – a tick is a result of a sell deal
+
+      // @TODO: Verificar por fechamento de candles
+   } 
 }
 
 
@@ -306,6 +331,51 @@ void handleSocketIncomingData(int idxClient) {
             // Informa a todos os interessados sobre as portas dos EA
             sendServersToAll();
          } 
+         // Permite ao cliente subscrever ou remover a subscrição em um tópico, no formato "TOPIC_<CODIGO_TOPICO>_<0|1>"
+         // Ex. TOPIC_1_1, TOPIC_3_1, 
+         else if (request == "TOPIC") {
+            if(k == 3){
+               int topic = StringToInteger(parts[1]);               
+               bool subscribe = (parts[2] == '1');
+
+               // Reordena os tópicos do cliente antes 
+               ArraySort(client.topics);
+
+               int sz = ArraySize(client.topics);
+               // Já está subscrito no topico
+               bool isSubscribed = ArrayBsearch(client.topics, topic) >= 0;
+
+               if(subscribe){
+                  // Subscrevendo no tópico
+                  if (!isSubscribed) {
+                     // Cliente ainda não está subscrito no tópico
+                     
+                     ArrayResize(client.topics, sz+1);
+                     client.topics[sz] = topic;                    
+                  }
+               } else{
+                  // Removendo subscrição no tópico
+                  if (isSubscribed) {
+                     int topics[];
+                     int index = ArrayBsearch(client.topics, topic);
+                     ArrayResize(topics, sz-1);
+
+                     for(int i=0, j=0; i < sz; i++, j++) {
+                        if (i == index) {
+                           j--;
+                        } else {
+                           topics[j] = client.topics[i];
+                        }
+                     }
+
+                     ArrayCopy(client.topics, topics);
+                  }
+               }
+
+               // Reordena a lista de tópicos
+               ArraySort(client.topics);
+            }            
+         }
          else if (request == "CLOSE") {            
             bForceClose = true;
             
@@ -314,7 +384,7 @@ void handleSocketIncomingData(int idxClient) {
 
             switch(command) {
                case COMMAND_XPTO: 
-                  client.socket.Send("#" + request + "#" + "Conteúdo da resposta qualquer" + CRLF);
+                  comandXpto(client, request);
                   break;
             } 
          }
@@ -338,6 +408,7 @@ void handleSocketIncomingData(int idxClient) {
       ArrayResize(glbClients, ctClients);
    }
 }
+
 
 /**
  * Permite receber mensagens do Master.
@@ -436,4 +507,82 @@ bool createServer(ushort port){
       
       return false;
    }
+}
+
+// --------------------------------------------------------------------
+// Tópicos (PUB SUB)
+// --------------------------------------------------------------------
+
+
+/**
+ * Publica o Tick atual para os interessados
+ * 
+ * @param timeMsc Time of a price last update in milliseconds 
+ * @param last Price of the last deal (Last) 
+ * @param volume  Volume for the current Last price 
+ * @param isBuy 1: a tick is a result of a buy deal, -1: a tick is a result of a sell deal, 0: otherwise
+ */
+void publishTick(long timeMsc, double bid, double ask, double last, ulong volume, int isBuyOrSell){
+   string content = LongToString(timeMsc) 
+         + " " + DoubleToString(bid) 
+         + " " + DoubleToString(ask) 
+         + " " + DoubleToString(last) 
+         + " " + IntegerToString(volume) 
+         + " " + IntegerToString(isBuyOrSell);
+
+   publishOnTopic(TOPIC_TICK, content);
+}
+
+/**
+ * Publica o fechamento de candles para o timeframe informado
+ */
+void publishCandle(int timeframe, long timeMsc, double open, double close, double hight, double low, double volume){
+   publishOnTopic(TOPIC_CANDLE, "");
+}
+
+
+/**
+ * Publica o conteúdo no tópico especificado
+ */
+void publishOnTopic(int topic, string content){
+   string message = "*" + IntegerToString(topic) + "*" + content;
+   for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
+      if(ArrayBsearch(glbClients[i].topics, topic) >= 0){
+         // Se o cliente está subscrito no tópico
+         glbClients[i].socket.Send(message);
+      };
+   }
+}
+
+
+// --------------------------------------------------------------------
+// Comandos (RPC)
+// --------------------------------------------------------------------
+
+/**
+ * Executa o comando e evia a reposta para o cliente informado
+ */
+void comandXpto(Client& client, int requestId){
+   commandSendResponse(client, requestId, 0, "Mensagem de  teste qualquer");
+}
+
+
+/**
+ * Envia a resposta para um comando, no formato: "#ID_REQUISICAO#<CONTEUDO>"
+ * 
+ * Onde <CONTEUDO> pode ser o conteúdo do comando ou "@<CODIGO_ERRO>" em caso de falha
+ */
+void commandSendResponse(Client& client, int requestId, int error, string content){
+   string message;
+
+   StringAdd("#" + requestId + "#");
+   if (error > 0) {
+      StringAdd(message, "@" + error);
+   } else {
+      StringAdd(message, content);
+   }
+
+   StringAdd(message, CRLF);
+
+   client.socket.Send(message);
 }

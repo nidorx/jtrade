@@ -15,6 +15,8 @@ import java.util.Observable;
 
 /**
  * Integração com o Metatrader usando socket
+ * 
+ * https://www.mql5.com/en/articles/1284
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */

@@ -98,7 +98,7 @@ public class SocketClient extends Observable {
      */
     private void onMessage(String message) {
         if (message.startsWith("#")) {
-            // Está respondendo a uma mensagem sincronizada, no formato "#ID_REQUISICAO#<CONTEUDO>"
+            // Está respondendo a uma mensagem sincronizada, no formato "#<ID_REQUISICAO>#<CONTEUDO>"
 
             final String[] parts = message.split("#", 3);
             if (parts.length != 3) {
@@ -112,6 +112,17 @@ public class SocketClient extends Observable {
                 REQUESTS.get(id).resolve(content);
                 REQUESTS.remove(id);
             }
+        } if (message.startsWith("*")) {
+            // Está respondendo a um topico, no formato "*<ID_TOPICO>*<CONTEUDO>"
+
+            final String[] parts = message.split("*", 3);
+            if (parts.length != 3) {
+                // Formato de mensagem inválida
+                return;
+            }
+
+            final Integer topicId = Integer.valueOf(parts[1]);
+            // @TODO: Informar ao interessado sobre o topico
         } else {
             notifyObservers(message);
         }
@@ -124,51 +135,63 @@ public class SocketClient extends Observable {
     }
 
     /**
-     * Envia uma mensagem para o MT5.
-     *
-     * A thread atual fica em espera ate que o EA responda
+     * Envia uma mensagem para o EA.
      *
      * @param message
-     * @return
-     * @throws java.lang.InterruptedException
+     * @throws java.io.IOException
      */
-    public String send(String message) throws InterruptedException {
-        Integer id = REQUEST_SEQUENCE.getAndIncrement();
-        final ResponseAsync response = new ResponseAsync();
-        REQUESTS.put(id, response);
-
-        try {
-            outputStream.write(("" + id + " " + message + CRLF).getBytes());
-            outputStream.flush();
-        } catch (IOException ex) {
-            notifyObservers(ex);
-        }
-
-        // Aguarda a resposta do EA para continuar a execução
-        response.await();
-
-        return response.getResult();
+    public void send(String message) throws IOException {
+        outputStream.write((message + CRLF).getBytes());
+        outputStream.flush();
     }
 
     /**
-     * Executa um comando no Abstração para execução de comandos no terminal (JTrade EA)
+     * Executa um comando no EA (JTrade EA)
+     *
+     * A thread atual fica em espera ate que o EA responda
      *
      * @param command
      * @param args
      * @return
+     * @throws java.io.IOException
      * @throws java.lang.InterruptedException
      * @throws com.github.nidorx.jtrade.broker.impl.metatrader.MT5Exception
      */
-    public String exec(Command command, Object... args) throws InterruptedException, MT5Exception {
-        StringBuilder commandStr = new StringBuilder(command.code + " ");
+    public String exec(Command command, Object... args) throws IOException, InterruptedException, MT5Exception {
+        final Integer id = REQUEST_SEQUENCE.getAndIncrement();
+        final ResponseAsync response = new ResponseAsync();
+
+        REQUESTS.put(id, response);
+        
+        // No formato: "<NUM_REQUISICAO>_<COD_COMANDO>_<PARAM_1>_<PARAM_2>_<PARAM_N>"
+        final StringBuilder message = new StringBuilder();
+
+        message
+                .append(id)
+                .append('_')
+                .append(command.code);
 
         if (args != null && args.length > 0) {
             for (Object arg : args) {
-                commandStr.append('_').append(arg);
+                message.append('_').append(arg);
             }
         }
 
-        String result = send(commandStr.toString());
+        try {
+            send(message.toString());
+
+            // Aguarda a resposta do EA para continuar a execução
+            response.await();
+        } catch (IOException | InterruptedException ex) {
+
+            // Limpa a referencia
+            REQUESTS.remove(id);
+
+            throw ex;
+        }
+        
+        // A resposta, quando erro, retorna apenas "@<NUMERO_DO_ERRO>"
+        String result = response.getResult();
         int ix = result.lastIndexOf('@');
         int error = ix >= 0 ? Integer.parseInt(result.substring(ix + 1)) : 0;
         if (error != 0) {

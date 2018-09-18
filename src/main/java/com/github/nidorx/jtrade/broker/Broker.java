@@ -414,7 +414,7 @@ public abstract class Broker {
     }
 
     /**
-     * Permite ao broker ser informado quando um novo OHLC é recebido para o instrumento e frame específico
+     * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
      *
      * @param instrument
      * @param timeFrame
