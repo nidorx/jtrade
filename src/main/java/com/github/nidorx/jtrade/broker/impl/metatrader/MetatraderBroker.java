@@ -22,14 +22,14 @@ import java.util.Observable;
  */
 public class MetatraderBroker extends Broker {
 
-    private final SocketClient client;
+    private final MT5SocketClient client;
 
     public static void main(String[] args) throws IOException {
         MetatraderBroker metatraderBroker = new MetatraderBroker("127.0.0.1", 23456);
     }
 
     public MetatraderBroker(String host, int port) throws IOException {
-        this.client = new SocketClient(host, port);
+        this.client = new MT5SocketClient(host, port);
         
         /**
          * Ouve mensagens do servidor
@@ -39,6 +39,10 @@ public class MetatraderBroker extends Broker {
         });
         
         client.connect();
+        
+        // Topico Tick
+        client.send("TOPIC_1_1");
+        
         
 //        client.send("quote");;
     }

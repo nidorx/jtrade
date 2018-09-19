@@ -29,14 +29,16 @@ input ushort   ServerPort = 23456;  // Server port
 // No formato:
 // "<NUM_REQUISICAO>_<COD_COMANDO>_<PARAM_1>_<PARAM_2>_<PARAM_N>"
 // --------------------------------------------------------------------
-#define COMMAND_XPTO          "1"
+#define CMD_REGISTER_EA    1  // Comando enviado de EA para EA com objetivo de sincronização
+#define CMD_XPTO           2
 
 
 // --------------------------------------------------------------------
 // Tópicos de subscrição
 // --------------------------------------------------------------------
 #define TOPIC_TICK         1  // Todos os ticks
-#define TOPIC_M1           2  // Fechamendo de candles no periodo M5
+#define TOPIC_CANDLE       1  // Candles (fechamento de barras)
+
 
 /**
  * Representa o tipo de cliente conectado
@@ -115,7 +117,10 @@ void OnInit() {
       Print("JTrade: Client connection succeeded");
    } else {
       // Criar o Master
-      createServer(ServerPort);
+      int serverPort = ServerPort;
+      while(!createServer(serverPort++)){
+         continue;
+      }      
    }
 }
 
@@ -198,9 +203,6 @@ void OnTimer() {
    for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
       handleSocketIncomingData(i);
    }
-   
-   // Processar mensagens provenientes do MASTER
-   handleIncomingFromMaster();
 }
 
 
@@ -271,31 +273,6 @@ void acceptNewConnections() {
 
 
 /**
- * Envia a lista com as portas dos servidores para todos os clientes
- */
-void sendServersToAll() {
-   
-   string message = "SERVERS_";
-   StringAdd(message, IntegerToString(glbServerPort));
-   StringAdd(message, ",");
-   for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
-      Client client = glbClients[i];
-      if(client.type == CLIENT_TYPE_EA){
-         StringAdd(message, IntegerToString(client.port));
-         if(i < sz-1) {
-            StringAdd(message, ",");
-         }
-      }
-   }
-   StringAdd(message, CRLF);    
-
-   for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
-      sendServers(glbClients[i].socket.Send(message));
-   }
-}
-
-
-/**
  * Lida com qualquer novo dado recebido em um soquete do cliente, identificado
  * pelo seu índice dentro do array glbClients []. Esta função
  * exclui o objeto ClientSocket e reestrutura o array,
@@ -307,12 +284,11 @@ void handleSocketIncomingData(int idxClient) {
    // Cliente enviou a mensagem "CLOSE"
    bool bForceClose = false;
    string line;
-   string parts[];
-   string command;
+   string parts[];   
    string request;
    int k;
    do {
-      // No formato: "<NUM_REQUISICAO>_<COD_COMANDO>_<PARAM_1>_<PARAM_2>_<PARAM_N>"
+      
       line = client.socket.Receive(CRLF);               
       k = StringSplit(line, StringGetCharacter("_", 0), parts); 
       if(k > 0) {
@@ -322,21 +298,13 @@ void handleSocketIncomingData(int idxClient) {
          //    client.socket.Send(Symbol() + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_BID), 6) + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_ASK), 6) + CRLF);
    
          // }
-         if (request == "I_AM_EA") {
-            // Esse cliente é um EA
-            int port = StringToInteger(parts[1]);
-            client.type = CLIENT_TYPE_EA;
-            client.port = port;
-            
-            // Informa a todos os interessados sobre as portas dos EA
-            sendServersToAll();
-         } 
+         
          // Permite ao cliente subscrever ou remover a subscrição em um tópico, no formato "TOPIC_<CODIGO_TOPICO>_<0|1>"
          // Ex. TOPIC_1_1, TOPIC_3_1, 
-         else if (request == "TOPIC") {
+         if (request == "TOPIC") {
             if(k == 3){
                int topic = StringToInteger(parts[1]);               
-               bool subscribe = (parts[2] == '1');
+               bool subscribe = (parts[2] == "1");
 
                // Reordena os tópicos do cliente antes 
                ArraySort(client.topics);
@@ -375,16 +343,48 @@ void handleSocketIncomingData(int idxClient) {
                // Reordena a lista de tópicos
                ArraySort(client.topics);
             }            
+         }         
+         // Listagem das portas de todos os outros servers (EA's) abertos 
+         // No formato: "SERVERS_<PORT_1>_<PORT_2>_<PORT_N>"
+         else if (request == "SERVERS") {                                   
+            
+            // Redimensiona a lista de servers
+            ArrayResize(glbServers, k-1);
+            
+            int serverPort = ServerPort;
+            if(k > 1) {
+               for(int i=0, j=1; j < k; i++, j++) {
+                  glbServers[i] = StringToInteger(parts[j]);
+                  serverPort = MathMax(serverPort, glbServers[i]);
+               }
+            }
+            
+            // Inicializa o server, se necessário e salva o número da porta 
+            if(!glbServerSocket) {
+               while(!createServer(++serverPort)){
+                  continue;
+               }               
+               // Informa ao MASTER sobre a porta deste EA
+               client.socket.Send("0_" + CMD_REGISTER_EA + "_" + IntegerToString(serverPort) + CRLF);
+            }
          }
          else if (request == "CLOSE") {            
             bForceClose = true;
             
-         } else if (k > 1){
-            command = parts[1];
+         } 
+         // RPC
+         // No formato: "<REQUEST_ID>_<COMMAND_CODE>_<PARAM_1>_<PARAM_2>_<PARAM_N>"
+         else if (k > 1){          
+            int requestId = StringToInteger(parts[0]);
+            int command = StringToInteger(parts[1]);
 
             switch(command) {
-               case COMMAND_XPTO: 
-                  comandXpto(client, request);
+               case CMD_REGISTER_EA:
+                  // "<REQUEST_ID>_<CMD_REGISTER_EA>_<PORT_NUMBER>"
+                  comandRegisterEA(client, requestId, StringToInteger(parts[2]));
+                  break;
+               case CMD_XPTO: 
+                  comandXpto(client, requestId);
                   break;
             } 
          }
@@ -395,6 +395,11 @@ void handleSocketIncomingData(int idxClient) {
    // release the socket and shuffle the glbClients[] array
    if (!client.socket.IsSocketConnected() || bForceClose) {
       Print("JTrade: Client has disconnected");
+      
+      if(glbClientSocket == client.socket){
+         // @TODO: Reconectar-se ao server?
+         delete glbClientSocket;
+      }
 
       // Cliente está morto. Destroi o objeto
       // delete client;
@@ -406,74 +411,8 @@ void handleSocketIncomingData(int idxClient) {
       }
       ctClients--;
       ArrayResize(glbClients, ctClients);
-   }
-}
-
-
-/**
- * Permite receber mensagens do Master.
- *
- * O master apenas envia a lista as portas dos outros clients. 
- *
- * Essa lista é usada para que, se o master desligar, um dos clientes vai assumir a posição de master.
- */
-void handleIncomingFromMaster() {
-   
-   if(glbClientSocket == NULL){
-      // Não está conectado, pode significar que esse cara é o server
-      return;
-   }   
-
-   string line;
-   string parts[];
-   string command;
-   int k;
-   do {
-      line = glbClientSocket.Receive(CRLF);               
-      k = StringSplit(line, StringGetCharacter("_", 0), parts); 
-      if(k > 0) {
-         command = parts[0];
-         
-         // Listagem das portas de todos os outros servers (EA's) abertos 
-         if (command == "SERVERS") {
-            
-            string portsStr[];
-            int l = StringSplit(parts[1], StringGetCharacter(",", 0), portsStr);
-            
-            // Redimensiona a lista de servers
-            ArrayResize(glbServers, l);
-            
-            int serverPort = ServerPort;
-            if(l > 0) {
-               for(int i=0; i<l; i++) {
-                  glbServers[i] = StringToInteger(portsStr[i]);
-                  serverPort = MathMax(serverPort, glbServers[i]);
-               }
-            }
-            
-            // Inicializa o server, se necessário e salva o número da porta 
-            if(!glbServerSocket) {
-               while(!createServer(++serverPort)){
-                  continue;
-               }
-
-               // Informa ao MASTER sobre a porta deste EA
-               glbClientSocket.Send("I_AM_EA_" + IntegerToString(serverPort) + CRLF);
-            }
-         }
-      }
-   } while (line != "");
-
-   // A conexão com o Master foi perdida
-   if (!glbClientSocket.IsSocketConnected()) {
-      Print("JTrade: Client has disconnected");
-
-      // Cliente está morto. Destroi o objeto
-      delete glbClientSocket;
       
-      // Verifica se o cliente atual pode tornar-se master
-      
-      // ou faz a conexão com o novo master
+     
    }
 }
 
@@ -509,9 +448,38 @@ bool createServer(ushort port){
    }
 }
 
+
 // --------------------------------------------------------------------
 // Tópicos (PUB SUB)
 // --------------------------------------------------------------------
+
+
+
+/**
+ * Envia a lista com as portas dos servidores para todos os clientes
+ */
+void sendServersToAll() {
+   
+   string message = "SERVERS_";
+   StringAdd(message, IntegerToString(glbServerPort));
+   StringAdd(message, ",");
+      
+   for (int sz = ArraySize(glbClients), i = sz - 1; i >= 0; i--) {
+      Client client = glbClients[i];
+      if(client.type == CLIENT_TYPE_EA){
+         StringAdd(message, IntegerToString(client.port));
+         if(i < sz-1) {
+            StringAdd(message, ",");
+         }
+      }
+   }
+   StringAdd(message, CRLF);    
+
+   for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
+      glbClients[i].socket.Send(message);
+   }
+}
+
 
 
 /**
@@ -523,7 +491,7 @@ bool createServer(ushort port){
  * @param isBuy 1: a tick is a result of a buy deal, -1: a tick is a result of a sell deal, 0: otherwise
  */
 void publishTick(long timeMsc, double bid, double ask, double last, ulong volume, int isBuyOrSell){
-   string content = LongToString(timeMsc) 
+   string content = timeMsc
          + " " + DoubleToString(bid) 
          + " " + DoubleToString(ask) 
          + " " + DoubleToString(last) 
@@ -541,6 +509,36 @@ void publishCandle(int timeframe, long timeMsc, double open, double close, doubl
 }
 
 
+// --------------------------------------------------------------------
+// Comandos (RPC)
+// --------------------------------------------------------------------
+
+
+/**
+ * Permite a um EA informar ao MASTER a porta a que ele está atendendo
+ */
+void comandRegisterEA(Client& client, int requestId, int portNumber){
+   // Esse cliente é um EA   
+   client.type = CLIENT_TYPE_EA;
+   client.port = portNumber;
+      
+   sendServersToAll();   
+}
+
+
+/**
+ * Executa o comando e evia a reposta para o cliente informado
+ */
+void comandXpto(Client& client, int requestId){
+   commandSendResponse(client, requestId, 0, "Mensagem de  teste qualquer");
+}
+
+
+// --------------------------------------------------------------------
+// Métodos utilitários
+// --------------------------------------------------------------------
+
+
 /**
  * Publica o conteúdo no tópico especificado
  */
@@ -555,27 +553,14 @@ void publishOnTopic(int topic, string content){
 }
 
 
-// --------------------------------------------------------------------
-// Comandos (RPC)
-// --------------------------------------------------------------------
-
-/**
- * Executa o comando e evia a reposta para o cliente informado
- */
-void comandXpto(Client& client, int requestId){
-   commandSendResponse(client, requestId, 0, "Mensagem de  teste qualquer");
-}
-
-
 /**
  * Envia a resposta para um comando, no formato: "#ID_REQUISICAO#<CONTEUDO>"
  * 
  * Onde <CONTEUDO> pode ser o conteúdo do comando ou "@<CODIGO_ERRO>" em caso de falha
  */
 void commandSendResponse(Client& client, int requestId, int error, string content){
-   string message;
+   string message = "#" + requestId + "#";
 
-   StringAdd("#" + requestId + "#");
    if (error > 0) {
       StringAdd(message, "@" + error);
    } else {

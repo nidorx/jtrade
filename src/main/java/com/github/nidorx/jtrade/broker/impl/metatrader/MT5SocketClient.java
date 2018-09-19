@@ -41,7 +41,7 @@ class ResponseAsync {
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-public class SocketClient extends Observable {
+public class MT5SocketClient extends Observable {
 
     private final String host;
     private final int port;
@@ -66,7 +66,7 @@ public class SocketClient extends Observable {
      */
     private static final Map<Integer, ResponseAsync> REQUESTS = new ConcurrentHashMap<>();
 
-    public SocketClient(String host, int port) {
+    public MT5SocketClient(String host, int port) {
         this.host = host;
         this.port = port;
     }
