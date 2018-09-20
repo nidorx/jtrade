@@ -6,6 +6,7 @@ import com.github.nidorx.jtrade.util.Cancelable;
 import com.github.nidorx.jtrade.util.TrheeConsumer;
 import com.github.nidorx.jtrade.OHLC;
 import com.github.nidorx.jtrade.Strategy;
+import com.github.nidorx.jtrade.Tick;
 import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.TimeSeries;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
@@ -16,6 +17,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
@@ -411,6 +413,24 @@ public abstract class Broker {
         // Se já existirem registros, todos eles serão carregados
         Instant start = Instant.now().minusSeconds(timeFrame.seconds * 30);
         loadTimeSeries(instrument, timeFrame, start, Instant.now());
+    }
+
+    /**
+     * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
+     *
+     * @param instrument
+     * @param tick
+     */
+    protected void onTick(Instrument instrument, Tick tick) {
+        if (!timeSeriesCached.containsKey(instrument)) {
+            return;
+        }
+
+        this.forEachStrategies((strategy, instr, v) -> {
+            if (instr.equals(instrument)) {
+                strategy.processTick(tick);
+            }
+        });
     }
 
     /**

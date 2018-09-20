@@ -1,15 +1,19 @@
 package com.github.nidorx.jtrade.broker.impl.metatrader;
 
+import com.github.nidorx.jtrade.util.Cancelable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Encapsula o mecanismo de resposta asíncrona do server
@@ -66,6 +70,8 @@ public class MT5SocketClient extends Observable {
      */
     private static final Map<Integer, ResponseAsync> REQUESTS = new ConcurrentHashMap<>();
 
+    private static final Map<Topic, List<Consumer<String>>> SUBSCRIPTIONS = new ConcurrentHashMap<>();
+
     public MT5SocketClient(String host, int port) {
         this.host = host;
         this.port = port;
@@ -97,6 +103,7 @@ public class MT5SocketClient extends Observable {
      * @param message
      */
     private void onMessage(String message) {
+        System.out.println(message);
         if (message.startsWith("#")) {
             // Está respondendo a uma mensagem sincronizada, no formato "#<ID_REQUISICAO>#<CONTEUDO>"
 
@@ -112,17 +119,31 @@ public class MT5SocketClient extends Observable {
                 REQUESTS.get(id).resolve(content);
                 REQUESTS.remove(id);
             }
-        } if (message.startsWith("*")) {
+        } else if (message.startsWith("\\*")) {
             // Está respondendo a um topico, no formato "*<ID_TOPICO>*<CONTEUDO>"
 
-            final String[] parts = message.split("*", 3);
+            final String[] parts = message.split("\\*", 3);
             if (parts.length != 3) {
                 // Formato de mensagem inválida
                 return;
             }
 
             final Integer topicId = Integer.valueOf(parts[1]);
-            // @TODO: Informar ao interessado sobre o topico
+
+            Topic topic = Topic.getByCode(topicId);
+            if (topic == null) {
+                return;
+            }
+            final String content = parts[2];
+
+            if (!SUBSCRIPTIONS.containsKey(topic)) {
+                return;
+            }
+
+            //  Informar aos interessados sobre o topico
+            SUBSCRIPTIONS.get(topic).forEach((callback) -> {
+                callback.accept(content);
+            });
         } else {
             notifyObservers(message);
         }
@@ -146,6 +167,39 @@ public class MT5SocketClient extends Observable {
     }
 
     /**
+     * Permite susbrever em um tópico específico
+     *
+     * @param topic
+     * @param callback
+     * @return
+     * @throws IOException
+     */
+    public Cancelable subscribe(final Topic topic, final Consumer<String> callback) throws IOException {
+
+        this.send("TOPIC_" + topic.code + "_1");
+
+        if (!SUBSCRIPTIONS.containsKey(topic)) {
+            SUBSCRIPTIONS.put(topic, new CopyOnWriteArrayList<>());
+        }
+
+        if (!SUBSCRIPTIONS.get(topic).contains(callback)) {
+            SUBSCRIPTIONS.get(topic).add(callback);
+        }
+
+        return () -> {
+            if (!SUBSCRIPTIONS.containsKey(topic)) {
+                return;
+            }
+
+            if (!SUBSCRIPTIONS.get(topic).contains(callback)) {
+                return;
+            }
+
+            SUBSCRIPTIONS.get(topic).remove(callback);
+        };
+    }
+
+    /**
      * Executa um comando no EA (JTrade EA)
      *
      * A thread atual fica em espera ate que o EA responda
@@ -162,7 +216,7 @@ public class MT5SocketClient extends Observable {
         final ResponseAsync response = new ResponseAsync();
 
         REQUESTS.put(id, response);
-        
+
         // No formato: "<NUM_REQUISICAO>_<COD_COMANDO>_<PARAM_1>_<PARAM_2>_<PARAM_N>"
         final StringBuilder message = new StringBuilder();
 
@@ -189,7 +243,7 @@ public class MT5SocketClient extends Observable {
 
             throw ex;
         }
-        
+
         // A resposta, quando erro, retorna apenas "@<NUMERO_DO_ERRO>"
         String result = response.getResult();
         int ix = result.lastIndexOf('@');

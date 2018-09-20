@@ -1,6 +1,7 @@
 package com.github.nidorx.jtrade.broker.impl.metatrader;
 
 import com.github.nidorx.jtrade.OHLC;
+import com.github.nidorx.jtrade.Tick;
 import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
@@ -15,7 +16,7 @@ import java.util.Observable;
 
 /**
  * Integração com o Metatrader usando socket
- * 
+ *
  * https://www.mql5.com/en/articles/1284
  *
  * @author Alex Rodin <contato@alexrodin.info>
@@ -30,21 +31,20 @@ public class MetatraderBroker extends Broker {
 
     public MetatraderBroker(String host, int port) throws IOException {
         this.client = new MT5SocketClient(host, port);
-        
+
         /**
          * Ouve mensagens do servidor
          */
-        client.addObserver((Observable o, Object arg) -> {
-            System.out.println(arg);
-        });
-        
+//        client.addObserver((Observable o, Object arg) -> {;
+//            System.out.println(arg);
+//        });
         client.connect();
-        
-        // Topico Tick
-        client.send("TOPIC_1_1");
-        
-        
-//        client.send("quote");;
+
+        // Observa novos ticks
+        client.subscribe(Topic.TICK, (t) -> {
+            final Tick tick = new Tick(t);
+            System.out.println(tick);
+        });
     }
 
     @Override

@@ -50,15 +50,16 @@ enum ClientType { CLIENT_TYPE_EA, CLIENT_TYPE_CLIENT, CLIENT_TYPE_UNDEFINED };
  *
  * Um cliente pode ser um outro server ou o próprio backend em Java da solução JTrade
  */
-struct Client { 
-   // Número da porta, quando for outro server
-   int port;
-   // Tópicos que o cliente está subscrito
-   int topics[];
-   // O tipo de cliente conectado
-   ClientType type;
-   // A conexão com o cliente
-   ClientSocket * socket;
+class Client { 
+   public:
+      // Número da porta, quando for outro server
+      int port;
+      // Tópicos que o cliente está subscrito
+      int topics[];
+      // O tipo de cliente conectado
+      ClientType type;
+      // A conexão com o cliente
+      ClientSocket * socket;
 };
 
 /**
@@ -162,10 +163,8 @@ void OnTick() {
 
    MqlTick tick;
    if(SymbolInfoTick(Symbol(), tick)) {
-
-      // Publica os detalhes do tick
-      int isBuyOrSell = (tick.flags & TICK_FLAG_BUY) == TICK_FLAG_BUY ? 1 : (tick.flags & TICK_FLAG_SELL) == TICK_FLAG_SELL ? -1 : 0;
-      publishTick(tick.time_msc, tick.bid, tick.ask, tick.last, tick.volume, isBuyOrSell);
+            
+      publishTick(tick.time_msc, tick.bid, tick.ask, tick.last, tick.volume);
 
       
       // TICK_FLAG_LAST    – a tick has changed the last deal price
@@ -220,7 +219,7 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
          
       if (lparam == glbServerSocket.GetSocketHandle()) {
          // Activity on server socket. Accept new connections
-         Print("New server socket event - incoming connection");
+         Print("JTrade:New server socket event - incoming connection");
          acceptNewConnections();
 
       } else {
@@ -312,20 +311,24 @@ void handleSocketIncomingData(int idxClient) {
                int sz = ArraySize(client.topics);
                // Já está subscrito no topico
                bool isSubscribed = ArrayBsearch(client.topics, topic) >= 0;
+               
+               int topics[];
+               ArrayResize(topics, sz);                     
+               ArrayCopy(topics, client.topics);
 
                if(subscribe){
                   // Subscrevendo no tópico
                   if (!isSubscribed) {
                      // Cliente ainda não está subscrito no tópico
                      
-                     ArrayResize(client.topics, sz+1);
-                     client.topics[sz] = topic;                    
+                     ArrayResize(topics, sz+1);                     
+                     topics[sz] = topic;                                         
                   }
                } else{
                   // Removendo subscrição no tópico
                   if (isSubscribed) {
-                     int topics[];
-                     int index = ArrayBsearch(client.topics, topic);
+                     
+                     int index = ArrayBsearch(topics, topic);
                      ArrayResize(topics, sz-1);
 
                      for(int i=0, j=0; i < sz; i++, j++) {
@@ -334,14 +337,15 @@ void handleSocketIncomingData(int idxClient) {
                         } else {
                            topics[j] = client.topics[i];
                         }
-                     }
-
-                     ArrayCopy(client.topics, topics);
+                     }                     
                   }
                }
-
+   
+               ArraySort(topics);
+               ArrayResize(glbClients[idxClient].topics, ArraySize(topics));
+               ArrayCopy(glbClients[idxClient].topics, topics);
                // Reordena a lista de tópicos
-               ArraySort(client.topics);
+               
             }            
          }         
          // Listagem das portas de todos os outros servers (EA's) abertos 
@@ -490,13 +494,12 @@ void sendServersToAll() {
  * @param volume  Volume for the current Last price 
  * @param isBuy 1: a tick is a result of a buy deal, -1: a tick is a result of a sell deal, 0: otherwise
  */
-void publishTick(long timeMsc, double bid, double ask, double last, ulong volume, int isBuyOrSell){
+void publishTick(long timeMsc, double bid, double ask, double last, ulong volume){
    string content = timeMsc
          + " " + DoubleToString(bid) 
          + " " + DoubleToString(ask) 
          + " " + DoubleToString(last) 
-         + " " + IntegerToString(volume) 
-         + " " + IntegerToString(isBuyOrSell);
+         + " " + IntegerToString(volume);
 
    publishOnTopic(TOPIC_TICK, content);
 }
@@ -543,7 +546,7 @@ void comandXpto(Client& client, int requestId){
  * Publica o conteúdo no tópico especificado
  */
 void publishOnTopic(int topic, string content){
-   string message = "*" + IntegerToString(topic) + "*" + content;
+   string message = "*" + IntegerToString(topic) + "*" + content + CRLF;
    for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
       if(ArrayBsearch(glbClients[i].topics, topic) >= 0){
          // Se o cliente está subscrito no tópico

@@ -9,7 +9,7 @@ package com.github.nidorx.jtrade.util;
  * 
  * @author Alex Rodin <contato@alexrodin.info>
  */
-class SDParser {
+public class SDParser {
 
     private int ix;
     private final String src;
