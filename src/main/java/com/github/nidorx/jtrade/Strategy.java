@@ -3,8 +3,8 @@ package com.github.nidorx.jtrade;
 import com.github.nidorx.jtrade.util.Cancelable;
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
-import com.github.nidorx.jtrade.broker.Instrument;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Representação de uma estratégia de negociação. Pode ser comparado a um Expert Advisor do MT5 por exemplo
@@ -14,39 +14,29 @@ import java.time.Instant;
 public abstract class Strategy {
 
     /**
-     * Handle para cancelar recebimento de atualizações do contexto
-     */
-    private Cancelable contextListener;
-
-    private Instant onTickStart;
-
-    private Instant onTickEnd;
-
-    /**
      * O contexto de execução
      */
-    protected Broker context;
-
-    /**
-     * Os dados sendo usados na estratégia, recebidas do contexto
-     */
-    protected TimeSeries timeSeries;
-
-    /**
-     * O timeframe de execução atual da estratégia
-     */
-    public final TimeFrame timeFrame;
+    private Broker broker;
 
     /**
      * O instrumento de execução atual da estratégia
      */
-    public final Instrument instrument;
+    public Instrument instrument;
 
     /**
-     * Permite a implementação do indicador executar quaisquer rotinas de limpeza quando este indicador for desconectado
-     * do timeSeries
+     * Handle para cancelar recebimento de atualizações do contexto
      */
-    protected abstract void onRelease();
+    private Cancelable brokerListener;
+
+    /**
+     * Instante da finalização da execução do onTick
+     */
+    private Instant onTickEnd;
+
+    /**
+     * Indica que está processando o método onTick
+     */
+    private final AtomicBoolean isOnTick = new AtomicBoolean(false);
 
     /**
      * Obtém o nome da estratégia, usado para LOG de execução
@@ -63,6 +53,13 @@ public abstract class Strategy {
     public abstract void initialize(Account account);
 
     /**
+     * Permite executar a estratégia para cada Tick
+     *
+     * @param tick
+     */
+    public abstract void onTick(Tick tick);
+
+    /**
      * Execução da estratégia para cada candle
      *
      * @param ohlc
@@ -70,15 +67,17 @@ public abstract class Strategy {
     public abstract void onData(OHLC ohlc);
 
     /**
-     * Execução da estratégia para cada Tick
-     *
-     * @param tick
+     * Permite a implementação do indicador executar quaisquer rotinas de limpeza quando este indicador for desconectado
+     * do timeSeries
      */
-    public abstract void onTick(Tick tick);
+    protected abstract void onRelease();
 
-    public Strategy(TimeFrame timeFrame, Instrument instrument) {
-        this.timeFrame = timeFrame;
-        this.instrument = instrument;
+    public Broker getBroker() {
+        return broker;
+    }
+
+    public Instrument getInstrument() {
+        return instrument;
     }
 
     /**
@@ -88,15 +87,18 @@ public abstract class Strategy {
      * operações
      */
     public void release() {
-        if (contextListener != null) {
-            contextListener.cancel();
-            contextListener = null;
-
-            // Rotinas de limpeza
-            this.onRelease();
-            this.context = null;
-            this.timeSeries = null;
+        if (brokerListener != null) {
+            brokerListener.cancel();
+            brokerListener = null;
         }
+
+        // Rotinas de limpeza
+        this.onRelease();
+
+        this.broker = null;
+        this.instrument = null;
+        this.onTickEnd = null;
+        this.isOnTick.set(false);
     }
 
     /**
@@ -105,42 +107,58 @@ public abstract class Strategy {
      * Após isso, sempre que o {@link Broker} receber novos valores, essa estratégia será informada, e realizará o fluxo
      * implmentado
      *
-     * @param context
+     * @param broker
+     * @param symbol
      * @throws Exception
      */
-    public void appendTo(Broker context) throws Exception {
-        release();
-        this.context = context;
-        contextListener = context.register(this);
-    }
-
-    public void setTimeSeries(TimeSeries timeSeries) {
-        this.timeSeries = timeSeries;
+    public void appendTo(final Broker broker, final String symbol) throws Exception {
+        if (!broker.equals(this.broker)) {
+            release();
+            this.broker = broker;
+            brokerListener = broker.register(this, symbol);
+        }
+        this.instrument = broker.getInstrument(symbol);
     }
 
     /**
      * Controle de execução do onTick da estratégia.
      *
      * O método onTick não é chamado se o tick a ser processado veio enquanto a estratégia estava processando outro
-     * tick, evitando assim processar informações defasadas, aumentando a velocidade de execução do script
+     * tick, evitando assim processar informações defazadas, aumentando a velocidade de execução do script e garantindo
+     * apenas o processamento de dados recentes
      *
      * @param tick
      */
-    public final void processTick(Tick tick) {
-        if (this.onTickStart != null) {
-            if (this.onTickEnd == null) {
-                // Está processando onTick
-                return;
-            } else if (this.onTickStart.isBefore(tick.time) && this.onTickEnd.isAfter(tick.time)) {
-                // @TODO: Validar processamento
-            }
+    public final void processTick(final Tick tick) {
+        if (this.isOnTick.get()) {
+            // Está processando onTick
+            return;
         }
 
-        this.onTickEnd = null;
-        this.onTickStart = Instant.now();
+        if (!tick.symbol.equals(getInstrument().getSymbol())) {
+            // Só permite processar ticks do mesmo símbolo
+            return;
+        }
 
-        this.onTick(tick);
+        // Se o tick veio antes do fim do processamento anterior, ignora o processamento
+        if (this.onTickEnd != null && tick.time.isBefore(this.onTickEnd)) {
+            return;
+        }
 
-        this.onTickEnd = Instant.now();
+        if (this.isOnTick.compareAndSet(false, true)) {
+            // Faz o processamento do tick, single thread
+            Instant start = Instant.now();
+            this.onTick(tick);
+
+            this.isOnTick.set(false);
+
+            if (broker.getServerTime().equals(tick.time)) {
+                // Não recebeu outro tick, computa o tempo de processamento real
+                this.onTickEnd = tick.time.plusMillis(Instant.now().toEpochMilli() - start.toEpochMilli());
+            } else {
+                // @TODO: Contexto pode ser Null
+                this.onTickEnd = broker.getServerTime();
+            }
+        }
     }
 }

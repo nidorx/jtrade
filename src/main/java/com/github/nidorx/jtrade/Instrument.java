@@ -1,71 +1,68 @@
-package com.github.nidorx.jtrade.broker;
+package com.github.nidorx.jtrade;
 
 import java.util.Currency;
-import lombok.AccessLevel;
 import lombok.Getter;
 
 /**
- * Representa um instrumento a ser negociado
+ * Representa um instrumento a ser negociado.
+ *
+ * O instrumento é criado e gerenciado pelo Broker
  *
  * @author Alex
  */
 @Getter
-public class Instrument {
-
-    @Getter(AccessLevel.NONE)
-    private final Broker broker;
+public abstract class Instrument {
 
     /**
      * Símbolo do instrumento
      *
      * ex. EURUSD, USDJPY
      */
-    private final String symbol;
+    public final String symbol;
 
     /**
      * Número de casas decimais no preço do símbolo.
      *
      * ex. EURUSD = 4, USDJPY = 2
      */
-    private final int digits;
+    public final int digits;
 
     /**
      * Número de unidades da mercadoria, moeda ou ativo financeiro em um lote.
      *
      * ex. FOREX STANDARD = 100.000
      */
-    private final int contractSize;
+    public final int contractSize;
 
     /**
      * PIP - Passo de mudança de preço mínimo.
      *
      * ex. EURUSD = 0.0001, USDJPY = 0.01
      */
-    private final double tickSize;
+    public final double tickSize;
 
     /**
      * Custo de um único ponto de mudança de preço.
      *
      * ex. FOREX STANDARD EURUSD 1.0 USD
      */
-    private final double tickValue;
+    public final double tickValue;
 
     /**
      * Moeda em que os requisitos de margem são calculados.
      */
-    private final Currency base;
+    public final Currency base;
 
     /**
      * Moeda na qual o lucro do comércio de símbolos é calculado.
      */
-    private final Currency quote;
+    public final Currency quote;
 
-    public Instrument(Broker broker, String symbol, Currency base, Currency quote) {
-        this(broker, symbol, base, quote, 4, 100000, 0.0);
+    public Instrument(String symbol, Currency base, Currency quote) {
+        this(symbol, base, quote, 4, 100000, 0.0);
     }
 
-    public Instrument(Broker broker, String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) {
-        this.broker = broker;
+    public Instrument(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) {
         this.symbol = symbol;
         this.digits = digits;
         this.contractSize = contractSize;
@@ -76,27 +73,23 @@ public class Instrument {
     }
 
     public double bid() {
-        return broker.bid(this);
+        return 0;
     }
 
     public double ask() {
-        return broker.ask(this);
+        return 0;
+    }
+
+    public double spread(Instrument instrument) {
+        return ask() - bid();
     }
 
     public double stopLevel() {
-        return broker.stopLevel(this);
+        return 0;
     }
 
     public double freezeLevel() {
-        return broker.freezeLevel(this);
-    }
-
-    public double ceil(double value) {
-        return Math.ceil(value / tickSize) * tickSize;
-    }
-
-    public double floor(double value) {
-        return Math.floor(value / tickSize) * tickSize;
+        return 0;
     }
 
     /**
@@ -155,6 +148,24 @@ public class Instrument {
      */
     public double pointsToPips(double points) {
         return points / pip() * tickSize;
+    }
+
+    public double ceil(double value) {
+        return Math.ceil(value / tickSize) * tickSize;
+    }
+
+    public double floor(double value) {
+        return Math.floor(value / tickSize) * tickSize;
+    }
+
+    /**
+     * Obtém um TimeSeries para o instrumento atual.
+     *
+     * @param timeframe
+     * @return
+     */
+    public TimeSeries getTimeseries(TimeFrame timeframe) {
+        return null;
     }
 
 //    public double valueAtPrice(double pips) {

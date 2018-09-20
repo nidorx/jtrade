@@ -6,7 +6,7 @@ import com.github.nidorx.jtrade.Strategy;
 import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.broker.Account;
-import com.github.nidorx.jtrade.broker.Instrument;
+import com.github.nidorx.jtrade.Instrument;
 import java.time.Instant;
 
 /**

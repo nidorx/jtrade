@@ -16,7 +16,7 @@ import com.github.nidorx.jtrade.broker.trading.DealType;
 import com.github.nidorx.jtrade.broker.trading.PositionType;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.exception.TradeExceptionReason;
-import com.github.nidorx.jtrade.broker.Instrument;
+import com.github.nidorx.jtrade.Instrument;
 import com.github.nidorx.jtrade.util.GoogleFinanceAPI;
 import com.github.nidorx.jtrade.util.SimpleCache;
 import java.time.Instant;
@@ -103,10 +103,10 @@ public class BacktesterForexBroker extends BacktesterBroker {
             // ---------------------------------------------------------------------------------------------------------
 
             // O tick anterior
-            final OHLC lastTick = tick(instrument, timeframe);
+            final OHLC lastTick = rates(instrument, timeframe);
 
             // @TODO: O novo tick
-            final OHLC tick = tick(instrument, timeframe);
+            final OHLC tick = rates(instrument, timeframe);
 
             try {
                 List<Order> orders = getOrders(instrument);
@@ -240,7 +240,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     public double bid(Instrument instrument) {
         return DOUBLE_CACHE.get("bid_" + instrument.getSymbol(), () -> {
             for (TimeFrame timeFrame : TimeFrame.all()) {
-                OHLC tick = tick(instrument, timeFrame);
+                OHLC tick = rates(instrument, timeFrame);
                 if (tick != null) {
                     // Número aleatório entre o fechamento anterior decrementado de 0 a -10% do tamanho do corpo do tick
                     double spread = Math.abs(tick.open - tick.close) * 0.1;
@@ -256,7 +256,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     public double ask(Instrument instrument) {
         return DOUBLE_CACHE.get("bid_" + instrument.getSymbol(), () -> {
             for (TimeFrame timeFrame : TimeFrame.all()) {
-                OHLC tick = tick(instrument, timeFrame);
+                OHLC tick = rates(instrument, timeFrame);
                 if (tick != null) {
                     // Número aleatório entre o fechamento anterior acrescido de 0 a -10% do tamanho do corpo do tick
                     double spread = Math.abs(tick.open - tick.close) * 0.1;
@@ -290,7 +290,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     private void fillValidOrder(final Order order) throws TradeException {
 
         final Instrument instrument = order.getInstrument();
-        final OHLC tick = tick(instrument);
+        final OHLC tick = rates(instrument);
         final Instant instant = Instant.ofEpochSecond(tick.time + 5);
         final double ask = ask(instrument);
         final double bid = bid(instrument);
@@ -712,7 +712,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
         final Instrument instrument = position.getInstrument();
         double volume = position.volume();
         long id = SEQ.incrementAndGet();
-        final OHLC tick = tick(instrument);
+        final OHLC tick = rates(instrument);
         final Instant instant = Instant.ofEpochSecond(tick.time + 5);
 
         if (position.getType().equals(PositionType.BUY)) {
@@ -761,7 +761,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
 
         final Instrument instrument = position.getInstrument();
         long id = SEQ.incrementAndGet();
-        final OHLC tick = tick(instrument);
+        final OHLC tick = rates(instrument);
         final Instant instant = Instant.ofEpochSecond(tick.time + 5);
 
         if (position.getType().equals(PositionType.BUY)) {

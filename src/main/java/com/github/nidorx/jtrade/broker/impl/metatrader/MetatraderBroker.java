@@ -5,14 +5,13 @@ import com.github.nidorx.jtrade.Tick;
 import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
-import com.github.nidorx.jtrade.broker.Instrument;
+import com.github.nidorx.jtrade.Instrument;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Observable;
 
 /**
  * Integração com o Metatrader usando socket

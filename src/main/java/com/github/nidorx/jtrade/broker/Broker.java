@@ -1,9 +1,9 @@
 package com.github.nidorx.jtrade.broker;
 
+import com.github.nidorx.jtrade.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.util.Cancelable;
-import com.github.nidorx.jtrade.util.TrheeConsumer;
 import com.github.nidorx.jtrade.OHLC;
 import com.github.nidorx.jtrade.Strategy;
 import com.github.nidorx.jtrade.Tick;
@@ -17,13 +17,13 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -36,7 +36,18 @@ import java.util.stream.Stream;
  */
 public abstract class Broker {
 
+    /**
+     * A última data conhecida do server.
+     *
+     * Usado nas estratégias e validações temporais.
+     *
+     * Importante usar esta informação para garantir a integridade das estratégias
+     */
+    private Instant serverTime = Instant.EPOCH;
+
     private static final Logger LOGGER = Logger.getLogger(Broker.class.getName());
+
+    private final Map<String, Instrument> instruments = new ConcurrentHashMap<>();
 
     /**
      * Cada estratégia possui uma instancia de TimeFrame exclusiva
@@ -51,7 +62,7 @@ public abstract class Broker {
     /**
      * Lista de estratégias registradas por instrumento e timeframe
      */
-    private final Map<Instrument, Map<TimeFrame, List<Strategy>>> strategiesRegistered = new ConcurrentHashMap<>();
+    private final Map<Instrument, List<Strategy>> strategies = new ConcurrentHashMap<>();
 
     /**
      * Obtém o nome único do Broker, usado para persistir os TimeSeries em disco
@@ -107,13 +118,101 @@ public abstract class Broker {
     public abstract List<Instrument> getInstruments() throws Exception;
 
     /**
+     * Minimal permissible StopLoss/TakeProfit value in points.
+     *
+     * channel of prices (in points) from the current price, inside which one can't place Stop Loss, Take Profit and
+     * pending orders. When placing an order inside the channel, the server will return message "Invalid Stops" and will
+     * not accept the order.
+     *
+     * @param instrument
+     * @return
+     */
+    public abstract double stopLevel(Instrument instrument);
+
+    /**
+     * Order freeze level in points.
+     *
+     * If the execution price lies within the range defined by the freeze level, the order cannot be modified, canceled
+     * or closed.
+     *
+     * @param instrument
+     * @return
+     */
+    public abstract double freezeLevel(Instrument instrument);
+
+    /**
+     * Instant Execution
+     *
+     * @param instrument
+     * @param price
+     * @param volume
+     * @param deviation
+     * @param sl
+     * @param tp
+     * @return
+     * @throws TradeException
+     */
+    public abstract Order buy(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
+
+    /**
+     * Instant Execution
+     *
+     * @param instrument
+     * @param price
+     * @param volume
+     * @param deviation
+     * @param sl
+     * @param tp
+     * @return
+     * @throws TradeException
+     */
+    public abstract Order sell(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
+
+    /**
+     * Buy Limit - Pending Order
+     * <p>
+     * a trade request to buy at the Ask price that is equal to or less than that specified in the order. The current
+     * price level is higher than the value specified in the order. Usually this order is placed in anticipation of that
+     * the security price will fall to a certain level and then will increase;
+     *
+     * @param instrument
+     * @param price
+     * @param volume
+     * @param sl
+     * @param tp
+     * @return
+     * @throws TradeException
+     */
+    public abstract Order buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+
+    public abstract Order sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+
+    public abstract Order sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+
+    public abstract void modify(Order order, double price, double volume, double sl, double tp) throws TradeException;
+
+    public abstract void remove(Order order) throws TradeException;
+
+    public abstract void modify(Position position, double sl, double tp) throws TradeException;
+
+    public abstract void close(Position position, double price, long deviation) throws TradeException;
+
+    public abstract void closePartial(Position position, double price, double volume, long deviation) throws TradeException;
+
+    public Instant getServerTime() {
+        return serverTime;
+    }
+
+    /**
      * Obtém um instrumento a partir do símbolo informado
      *
      * @param symbol
      * @return
      * @throws Exception
      */
-    public abstract Instrument getInstrument(String symbol) throws Exception;
+    public Instrument getInstrument(final String symbol) throws Exception {
+        return instruments.get(symbol);
+    }
 
     /**
      * Gets the Account Exchange Rate
@@ -167,17 +266,17 @@ public abstract class Broker {
         return position.getOrders();
     }
 
-    public OHLC tick(Instrument instrument) {
+    public OHLC rates(final Instrument instrument) {
         for (TimeFrame timeFrame : TimeFrame.all()) {
-            OHLC tick = tick(instrument, timeFrame);
-            if (tick != null) {
-                return tick;
+            OHLC rates = rates(instrument, timeFrame);
+            if (rates != null) {
+                return rates;
             }
         }
         return null;
     }
 
-    public OHLC tick(Instrument instrument, TimeFrame timeFrame) {
+    public OHLC rates(Instrument instrument, TimeFrame timeFrame) {
         if (!timeSeriesCached.containsKey(instrument)) {
             return null;
         }
@@ -188,37 +287,6 @@ public abstract class Broker {
         return get.get(timeFrame).last();
     }
 
-    public abstract double bid(Instrument instrument);
-
-    public abstract double ask(Instrument instrument);
-
-    public double spread(Instrument instrument) {
-        return ask(instrument) - bid(instrument);
-    }
-
-    /**
-     * Minimal permissible StopLoss/TakeProfit value in points.
-     *
-     * channel of prices (in points) from the current price, inside which one can't place Stop Loss, Take Profit and
-     * pending orders. When placing an order inside the channel, the server will return message "Invalid Stops" and will
-     * not accept the order.
-     *
-     * @param instrument
-     * @return
-     */
-    public abstract double stopLevel(Instrument instrument);
-
-    /**
-     * Order freeze level in points.
-     *
-     * If the execution price lies within the range defined by the freeze level, the order cannot be modified, canceled
-     * or closed.
-     *
-     * @param instrument
-     * @return
-     */
-    public abstract double freezeLevel(Instrument instrument);
-
     /**
      * Market Execution
      *
@@ -228,7 +296,7 @@ public abstract class Broker {
      * @throws TradeException
      */
     public Order buy(Instrument instrument, double volume) throws TradeException {
-        return buy(instrument, ask(instrument), volume, 0);
+        return buy(instrument, instrument.ask(), volume, 0);
     }
 
     /**
@@ -246,20 +314,6 @@ public abstract class Broker {
     }
 
     /**
-     * Instant Execution
-     *
-     * @param instrument
-     * @param price
-     * @param volume
-     * @param deviation
-     * @param sl
-     * @param tp
-     * @return
-     * @throws TradeException
-     */
-    public abstract Order buy(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
-
-    /**
      * Market Execution
      *
      * @param instrument
@@ -268,7 +322,7 @@ public abstract class Broker {
      * @throws TradeException
      */
     public Order sell(Instrument instrument, double volume) throws TradeException {
-        return sell(instrument, bid(instrument), volume, 0);
+        return sell(instrument, instrument.bid(), volume, 0);
     }
 
     /**
@@ -286,20 +340,6 @@ public abstract class Broker {
     }
 
     /**
-     * Instant Execution
-     *
-     * @param instrument
-     * @param price
-     * @param volume
-     * @param deviation
-     * @param sl
-     * @param tp
-     * @return
-     * @throws TradeException
-     */
-    public abstract Order sell(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
-
-    /**
      * @see Broker#buyLimit(deep.nidorx.core.ta.instrument.Instrument, double, double, long, double, double)
      * @param instrument
      * @param price
@@ -311,28 +351,9 @@ public abstract class Broker {
         return buyLimit(instrument, price, volume, 0, 0);
     }
 
-    /**
-     * Buy Limit - Pending Order
-     * <p>
-     * a trade request to buy at the Ask price that is equal to or less than that specified in the order. The current
-     * price level is higher than the value specified in the order. Usually this order is placed in anticipation of that
-     * the security price will fall to a certain level and then will increase;
-     *
-     * @param instrument
-     * @param price
-     * @param volume
-     * @param sl
-     * @param tp
-     * @return
-     * @throws TradeException
-     */
-    public abstract Order buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
-
     public Order sellLimit(Instrument instrument, double price, double volume) throws TradeException {
         return sellLimit(instrument, price, volume, 0, 0);
     }
-
-    public abstract Order sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
 
     public Order buyStop(Instrument instrument, double price, double volume) throws TradeException {
         return buyStop(instrument, price, volume, 0, 0);
@@ -344,8 +365,6 @@ public abstract class Broker {
         return sellStop(instrument, price, volume, 0, 0);
     }
 
-    public abstract Order sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
-
     public void modify(Order order, double price, double volume) throws TradeException {
         modify(order, price, volume, 0, 0);
     }
@@ -354,83 +373,61 @@ public abstract class Broker {
         modify(order, 0, 0, sl, tp);
     }
 
-    public abstract void modify(Order order, double price, double volume, double sl, double tp) throws TradeException;
-
-    public abstract void remove(Order order) throws TradeException;
-
-    public abstract void modify(Position position, double sl, double tp) throws TradeException;
-
-    public abstract void close(Position position, double price, long deviation) throws TradeException;
-
-    public abstract void closePartial(Position position, double price, double volume, long deviation) throws TradeException;
-
     /**
      * Registra uma estratégia para ser executada neste contexto.
      *
      * A estratégia passará a receber atualizações do contexto e executar transações no Broker deste contexto
      *
      * @param strategy
+     * @param symbol
      * @return
      * @throws java.lang.Exception
      */
-    public Cancelable register(Strategy strategy) throws Exception {
-        strategy.release();
+    public Cancelable register(final Strategy strategy, String symbol) throws Exception {
 
-        final TimeFrame timeFrame = strategy.timeFrame;
-        final Instrument instrument = strategy.instrument;
+        strategy.appendTo(this, symbol);
 
-        final TimeSeries timeSeries = new TimeSeries();
-        strategy.setTimeSeries(timeSeries);
-        strategiesTimeSeries.remove(strategy);
-        strategiesTimeSeries.put(strategy, timeSeries);
+        final Instrument instrument = getInstrument(symbol);
 
         // Inicialização da estratégia
         strategy.initialize(getAccount());
 
-        final List<Strategy> strategies = getStrategies(instrument, timeFrame);
-        strategies.remove(strategy);
-        strategies.add(strategy);
-
-        // Pós inicialização de estratégias no Broker
-        onRegister(strategy);
+        final List<Strategy> strats = getStrategies(instrument);
+        strats.remove(strategy);
+        strats.add(strategy);
 
         return () -> {
-            strategies.remove(strategy);
-            strategiesTimeSeries.remove(strategy);
+            getStrategies(instrument).remove(strategy);
         };
-    }
-
-    /**
-     * Invocado logo após registrar uma estratégia
-     *
-     * @param strategy
-     * @throws Exception
-     */
-    protected void onRegister(Strategy strategy) throws Exception {
-        final TimeFrame timeFrame = strategy.timeFrame;
-        final Instrument instrument = strategy.instrument;
-        // Carregar apenas os ultimos 30 candles,
-        // Se já existirem registros, todos eles serão carregados
-        Instant start = Instant.now().minusSeconds(timeFrame.seconds * 30);
-        loadTimeSeries(instrument, timeFrame, start, Instant.now());
     }
 
     /**
      * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
      *
-     * @param instrument
      * @param tick
      */
-    protected void onTick(Instrument instrument, Tick tick) {
-        if (!timeSeriesCached.containsKey(instrument)) {
-            return;
-        }
+    protected void onTick(Tick tick) {
 
-        this.forEachStrategies((strategy, instr, v) -> {
-            if (instr.equals(instrument)) {
-                strategy.processTick(tick);
+        try {
+            // Atualiza a data conhecida do servidor
+            if (tick.time.isAfter(serverTime)) {
+                serverTime = tick.time;
             }
-        });
+
+            final Instrument instrument = getInstrument(tick.symbol);
+
+            if (instrument == null) {
+                return;
+            }
+
+            this.forEachStrategies((strategy, instr) -> {
+                if (instr.equals(instrument)) {
+                    strategy.processTick(tick);
+                }
+            });
+        } catch (Exception ex) {
+            Logger.getLogger(Broker.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
@@ -453,7 +450,7 @@ public abstract class Broker {
         final TimeSeries tsGlobal = timeSeriesByTimeframes.get(timeFrame);
         tsGlobal.add(ohlc);
 
-        getStrategies(instrument, timeFrame).forEach((strategy) -> {
+        getStrategies(instrument).forEach((strategy) -> {
             final TimeSeries tsStrategy = strategiesTimeSeries.get(strategy);
             tsStrategy.add(ohlc);
             strategy.onData(ohlc);
@@ -512,11 +509,11 @@ public abstract class Broker {
 
         // Atualiza também todos os timeseries usados nas estratégias
         final List<OHLC> ohlcs = timeSeries.ohlc(timeSeries.size());
-        getStrategies(instrument, timeFrame)
-                .stream()
-                .filter((s) -> strategiesTimeSeries.containsKey(s))
-                .map((s) -> strategiesTimeSeries.get(s))
-                .forEach((t) -> t.add(ohlcs));
+//        getStrategies(instrument, timeFrame);
+//                .stream()
+//                .filter((s) -> strategiesTimeSeries.containsKey(s))
+//                .map((s) -> strategiesTimeSeries.get(s))
+//                .forEach((t) -> t.add(ohlcs));
     }
 
     /**
@@ -524,12 +521,10 @@ public abstract class Broker {
      *
      * @param consumer
      */
-    protected void forEachStrategies(TrheeConsumer<Strategy, Instrument, TimeFrame> consumer) {
-        strategiesRegistered.forEach((instrument, tfStr) -> {
-            tfStr.forEach((timeframe, strategies) -> {
-                strategies.forEach((strategy) -> {
-                    consumer.accept(strategy, instrument, timeframe);
-                });
+    protected void forEachStrategies(BiConsumer<Strategy, Instrument> consumer) {
+        strategies.forEach((instrument, strategiesList) -> {
+            strategiesList.forEach((strategy) -> {
+                consumer.accept(strategy, instrument);
             });
         });
     }
@@ -541,15 +536,11 @@ public abstract class Broker {
      * @param timeFrame
      * @return
      */
-    private List<Strategy> getStrategies(final Instrument instrument, final TimeFrame timeFrame) {
-        if (!strategiesRegistered.containsKey(instrument)) {
-            strategiesRegistered.put(instrument, new ConcurrentHashMap<>());
+    private List<Strategy> getStrategies(final Instrument instrument) {
+        if (!strategies.containsKey(instrument)) {
+            strategies.put(instrument, new CopyOnWriteArrayList<>());
         }
-        final Map<TimeFrame, List<Strategy>> strategiesByTimeframes = strategiesRegistered.get(instrument);
-        if (!strategiesByTimeframes.containsKey(timeFrame)) {
-            strategiesByTimeframes.put(timeFrame, new CopyOnWriteArrayList<>());
-        }
-        return strategiesByTimeframes.get(timeFrame);
+        return strategies.get(instrument);
     }
 
     /**
@@ -626,4 +617,18 @@ public abstract class Broker {
         }
     }
 
+    /**
+     * Implementação para permitir ao Broker gerenciar o instrumento
+     */
+    static class InstrumentImpl extends Instrument {
+
+        public InstrumentImpl(String symbol, Currency base, Currency quote) {
+            super(symbol, base, quote);
+        }
+
+        public InstrumentImpl(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) {
+            super(symbol, base, quote, digits, contractSize, tickValue);
+        }
+
+    }
 }

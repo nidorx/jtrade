@@ -5,6 +5,7 @@
  */
 package com.github.nidorx.jtrade.broker;
 
+import com.github.nidorx.jtrade.Instrument;
 import java.util.Currency;
 import org.junit.Test;
 import static org.junit.Assert.*;

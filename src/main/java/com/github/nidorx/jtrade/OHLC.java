@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Armazena as informações sobre Preço de um ativo
+ * Armazena as informações sobre Preço e volume de um ativo em um determinado periodo
+ *
+ * @TODO: Volume
  *
  * @author Alex
  */

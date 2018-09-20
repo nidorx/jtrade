@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade.backtesting.forex;
 
 import com.github.nidorx.jtrade.broker.Account;
-import com.github.nidorx.jtrade.broker.Instrument;
+import com.github.nidorx.jtrade.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.OrderType;
 import com.github.nidorx.jtrade.broker.trading.PositionType;

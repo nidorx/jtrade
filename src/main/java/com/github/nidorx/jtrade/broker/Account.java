@@ -1,5 +1,6 @@
 package com.github.nidorx.jtrade.broker;
 
+import com.github.nidorx.jtrade.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import java.util.Currency;
 import lombok.AccessLevel;
