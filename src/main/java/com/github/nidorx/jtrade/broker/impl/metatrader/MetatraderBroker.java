@@ -1,8 +1,7 @@
 package com.github.nidorx.jtrade.broker.impl.metatrader;
 
-import com.github.nidorx.jtrade.OHLC;
+import com.github.nidorx.jtrade.broker.impl.metatrader.model.Topic;
 import com.github.nidorx.jtrade.Tick;
-import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.Instrument;
@@ -10,8 +9,6 @@ import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import java.io.IOException;
-import java.time.Instant;
-import java.util.List;
 
 /**
  * Integração com o Metatrader usando socket
@@ -57,37 +54,12 @@ public class MetatraderBroker extends Broker {
     }
 
     @Override
-    public Account getAccountSummary(Instrument instrument) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    protected List<OHLC> requestTimeSeries(Instrument instrument, TimeFrame timeFrame, Instant start, Instant end) throws Exception {
+    public Account getAccountSummary(String symbol) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public Position getPosition(Instrument instrument) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<Instrument> getInstruments() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Instrument getInstrument(String symbol) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double bid(Instrument instrument) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double ask(Instrument instrument) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -122,11 +94,6 @@ public class MetatraderBroker extends Broker {
     }
 
     @Override
-    public Order buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public Order sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -153,6 +120,11 @@ public class MetatraderBroker extends Broker {
 
     @Override
     public void closePartial(Position position, double price, double volume, long deviation) throws TradeException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Order buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

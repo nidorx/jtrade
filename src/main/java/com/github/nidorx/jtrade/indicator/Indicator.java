@@ -99,15 +99,15 @@ public abstract class Indicator {
     public void appendTo(final TimeSeries ts) {
         release();
         this.timeSeries = ts;
-        cancelListener = ts.onUpdate((addedOldData) -> {
-            tsLastUpdate++;
-
-            // Quando o timeséries recebe valores antigos, força o re-calculo do indicador
-            if (addedOldData) {
-                lastCalculated = -1;
-                calculated.clear();
-            }
-        });
+//        cancelListener = ts.onUpdate((addedOldData) -> {
+//            tsLastUpdate++;
+//
+//            // Quando o timeséries recebe valores antigos, força o re-calculo do indicador
+//            if (addedOldData) {
+//                lastCalculated = -1;
+//                calculated.clear();
+//            }
+//        });
     }
 
     /**

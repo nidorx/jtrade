@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.impl.metatrader;
+package com.github.nidorx.jtrade.broker.impl.metatrader.model;
 
 /**
  * Lista dos comandos conhecidos pleo EA

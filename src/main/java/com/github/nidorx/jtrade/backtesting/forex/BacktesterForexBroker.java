@@ -151,7 +151,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
                 // -----------------------------------------------------------------------------------------------------
                 // 6) Invocar o método onData (consequentemente a estratégia será invocada)
                 // -----------------------------------------------------------------------------------------------------
-                onData(instrument, timeframe, tick);
+                onRates(instrument, timeframe, tick);
 
                 // 7) Possui mais ticks para validar?
                 // -----------------------------------------------------------------------------------------------------

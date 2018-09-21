@@ -1,7 +1,8 @@
 package com.github.nidorx.jtrade;
 
+import java.time.Instant;
 import java.util.Currency;
-import lombok.Getter;
+import java.util.List;
 
 /**
  * Representa um instrumento a ser negociado.
@@ -10,7 +11,6 @@ import lombok.Getter;
  *
  * @author Alex
  */
-@Getter
 public abstract class Instrument {
 
     /**
@@ -72,15 +72,43 @@ public abstract class Instrument {
         this.quote = quote;
     }
 
-    public double bid() {
-        return 0;
-    }
+    public abstract double bid();
 
-    public double ask() {
-        return 0;
-    }
+    public abstract double ask();
 
-    public double spread(Instrument instrument) {
+    /**
+     * Obtém um TimeSeries para o instrumento atual no timeframe informado
+     *
+     * @param timeframe
+     * @return
+     */
+    public abstract TimeSeries timeSeries(TimeFrame timeframe);
+
+    /**
+     * Obtém os ticks disponíveis deste instrumento
+     *
+     * @return
+     */
+    public abstract List<Tick> ticks();
+
+    /**
+     * Obtém os ticks até o instante determinado
+     *
+     * @param stop
+     * @return
+     */
+    public abstract List<Tick> ticks(Instant stop);
+
+    /**
+     * Obtém os ticks para o intervalo determinado
+     *
+     * @param start
+     * @param stop
+     * @return
+     */
+    public abstract List<Tick> ticks(Instant start, Instant stop);
+
+    public double spread() {
         return ask() - bid();
     }
 
@@ -156,16 +184,6 @@ public abstract class Instrument {
 
     public double floor(double value) {
         return Math.floor(value / tickSize) * tickSize;
-    }
-
-    /**
-     * Obtém um TimeSeries para o instrumento atual.
-     *
-     * @param timeframe
-     * @return
-     */
-    public TimeSeries getTimeseries(TimeFrame timeframe) {
-        return null;
     }
 
 //    public double valueAtPrice(double pips) {

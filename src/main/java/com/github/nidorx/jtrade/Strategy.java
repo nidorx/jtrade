@@ -62,9 +62,9 @@ public abstract class Strategy {
     /**
      * Execução da estratégia para cada candle
      *
-     * @param ohlc
+     * @param rates
      */
-    public abstract void onData(OHLC ohlc);
+    public abstract void onRates(OHLC rates);
 
     /**
      * Permite a implementação do indicador executar quaisquer rotinas de limpeza quando este indicador for desconectado
@@ -111,7 +111,7 @@ public abstract class Strategy {
      * @param symbol
      * @throws Exception
      */
-    public void appendTo(final Broker broker, final String symbol) throws Exception {
+    public void registerOn(final Broker broker, final String symbol) throws Exception {
         if (!broker.equals(this.broker)) {
             release();
             this.broker = broker;
@@ -135,7 +135,7 @@ public abstract class Strategy {
             return;
         }
 
-        if (!tick.symbol.equals(getInstrument().getSymbol())) {
+        if (!tick.symbol.equalsIgnoreCase(getInstrument().symbol)) {
             // Só permite processar ticks do mesmo símbolo
             return;
         }
