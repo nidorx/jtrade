@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 /**
  *
  * @author Alex Rodin <contato@alexrodin.info>
+ * @param <T>
  */
 public class SimpleCache<T> {
 

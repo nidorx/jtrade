@@ -1,5 +1,10 @@
-package com.github.nidorx.jtrade.core;
+package com.github.nidorx.jtrade.core.impl;
 
+import com.github.nidorx.jtrade.core.Instrument;
+import com.github.nidorx.jtrade.core.Rate;
+import com.github.nidorx.jtrade.core.Tick;
+import com.github.nidorx.jtrade.core.TimeFrame;
+import com.github.nidorx.jtrade.core.TimeSeries;
 import com.github.nidorx.jtrade.util.TimeSeriesGeneric;
 import java.time.Instant;
 import java.util.Currency;

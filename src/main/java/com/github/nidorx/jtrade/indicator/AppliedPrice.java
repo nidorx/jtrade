@@ -55,10 +55,6 @@ public class AppliedPrice {
         return apply.apply(rate);
     }
 
-    public double apply(double open, double close, double high, double low) {
-        return apply(new Rate(0, open, high, low, close));
-    }
-
     public enum APPLIED {
         PRICE_OPEN(OPEN),
         PRICE_CLOSE(CLOSE),

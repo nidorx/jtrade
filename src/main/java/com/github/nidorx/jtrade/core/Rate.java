@@ -7,9 +7,7 @@ import java.util.Map;
 /**
  * Armazena as informações sobre Preço e volume de um ativo em um determinado periodo
  *
- * @TODO: Volume
- *
- * @author Alex
+ * @author Alex Rodin <contato@alexrodin.info>
  */
 public class Rate {
 

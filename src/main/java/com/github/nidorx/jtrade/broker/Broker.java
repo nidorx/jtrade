@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.broker;
 
-import com.github.nidorx.jtrade.core.InstrumentImpl;
+import com.github.nidorx.jtrade.core.impl.InstrumentImpl;
 import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.Order;
@@ -149,6 +149,8 @@ public abstract class Broker {
 
     public abstract Order sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
 
+    public abstract Order buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+
     public abstract void modify(Order order, double price, double volume, double sl, double tp) throws TradeException;
 
     public abstract void remove(Order order) throws TradeException;
@@ -167,7 +169,7 @@ public abstract class Broker {
      * @return
      * @throws TradeException
      */
-    public Order buy(Instrument instrument, double volume) throws TradeException {
+    public final Order buy(Instrument instrument, double volume) throws TradeException {
         return buy(instrument, instrument.ask(), volume, 0);
     }
 
@@ -181,7 +183,7 @@ public abstract class Broker {
      * @return
      * @throws TradeException
      */
-    public Order buy(Instrument instrument, double price, double volume, long deviation) throws TradeException {
+    public final Order buy(Instrument instrument, double price, double volume, long deviation) throws TradeException {
         return buy(instrument, price, volume, deviation, 0, 0);
     }
 
@@ -193,7 +195,7 @@ public abstract class Broker {
      * @return
      * @throws TradeException
      */
-    public Order sell(Instrument instrument, double volume) throws TradeException {
+    public final Order sell(Instrument instrument, double volume) throws TradeException {
         return sell(instrument, instrument.bid(), volume, 0);
     }
 
@@ -207,7 +209,7 @@ public abstract class Broker {
      * @return
      * @throws TradeException
      */
-    public Order sell(Instrument instrument, double price, double volume, long deviation) throws TradeException {
+    public final Order sell(Instrument instrument, double price, double volume, long deviation) throws TradeException {
         return sell(instrument, price, volume, deviation, 0, 0);
     }
 
@@ -219,29 +221,27 @@ public abstract class Broker {
      * @return
      * @throws TradeException
      */
-    public Order buyLimit(Instrument instrument, double price, double volume) throws TradeException {
+    public final Order buyLimit(Instrument instrument, double price, double volume) throws TradeException {
         return buyLimit(instrument, price, volume, 0, 0);
     }
 
-    public Order sellLimit(Instrument instrument, double price, double volume) throws TradeException {
+    public final Order sellLimit(Instrument instrument, double price, double volume) throws TradeException {
         return sellLimit(instrument, price, volume, 0, 0);
     }
 
-    public Order buyStop(Instrument instrument, double price, double volume) throws TradeException {
+    public final Order buyStop(Instrument instrument, double price, double volume) throws TradeException {
         return buyStop(instrument, price, volume, 0, 0);
     }
 
-    public abstract Order buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
-
-    public Order sellStop(Instrument instrument, double price, double volume) throws TradeException {
+    public final Order sellStop(Instrument instrument, double price, double volume) throws TradeException {
         return sellStop(instrument, price, volume, 0, 0);
     }
 
-    public void modify(Order order, double price, double volume) throws TradeException {
+    public final void modify(Order order, double price, double volume) throws TradeException {
         modify(order, price, volume, 0, 0);
     }
 
-    public void modifyStop(Order order, double sl, double tp) throws TradeException {
+    public final void modifyStop(Order order, double sl, double tp) throws TradeException {
         modify(order, 0, 0, sl, tp);
     }
 
@@ -250,7 +250,7 @@ public abstract class Broker {
      *
      * @return
      */
-    public Instant getServerTime() {
+    public final Instant getServerTime() {
         return serverTime;
     }
 
@@ -261,7 +261,7 @@ public abstract class Broker {
      * @return
      * @throws Exception
      */
-    public Instrument getInstrument(final String symbol) throws Exception {
+    public final Instrument getInstrument(final String symbol) throws Exception {
         return instruments.get(symbol);
     }
 
@@ -271,7 +271,7 @@ public abstract class Broker {
      * @return
      * @throws Exception
      */
-    public List<Instrument> getInstruments() throws Exception {
+    public final List<Instrument> getInstruments() throws Exception {
         return new ArrayList<>(instruments.values());
     }
 
@@ -282,7 +282,7 @@ public abstract class Broker {
      * @return
      * @throws java.lang.Exception
      */
-    public Strategy getStrategy(final String symbol) throws Exception {
+    public final Strategy getStrategy(final String symbol) throws Exception {
         final Instrument instrument = getInstrument(symbol);
         if (instrument == null) {
             return null;
@@ -344,7 +344,7 @@ public abstract class Broker {
      *
      * @param tick
      */
-    protected void processTick(Tick tick) {
+    protected final void processTick(Tick tick) {
 
         try {
             // Atualiza a data conhecida do servidor
@@ -376,7 +376,7 @@ public abstract class Broker {
      * @param rate
      * @throws java.lang.Exception
      */
-    protected void processRate(Rate rate) throws Exception {
+    protected final void processRate(Rate rate) throws Exception {
 
         final InstrumentImpl instrument = (InstrumentImpl) getInstrument(rate.symbol);
         if (instrument != null) {
@@ -400,7 +400,7 @@ public abstract class Broker {
      * @param quote
      * @throws Exception
      */
-    protected void createInstrument(String symbol, Currency base, Currency quote) throws Exception {
+    protected final void createInstrument(String symbol, Currency base, Currency quote) throws Exception {
         final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
         if (instrument != null) {
             throw new Exception("A instrument is already registered for the symbol:" + symbol);
@@ -419,7 +419,7 @@ public abstract class Broker {
      * @param tickValue
      * @throws Exception
      */
-    protected void createInstrument(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) throws Exception {
+    protected final void createInstrument(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) throws Exception {
         final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
         if (instrument != null) {
             throw new Exception("A instrument is already registered for the symbol:" + symbol);
@@ -563,7 +563,7 @@ public abstract class Broker {
      * @return
      * @throws java.lang.Exception
      */
-    public double exchangeRate(Currency base, Currency quoted) throws Exception {
+    public final double exchangeRate(Currency base, Currency quoted) throws Exception {
         Currency accCurrency = getAccount().getCurrency();
 
         if (accCurrency.equals(base)) {
@@ -586,7 +586,7 @@ public abstract class Broker {
         return 1;
     }
 
-    public double exchange(double value, Currency from, Currency to) throws Exception {
+    public final double exchange(double value, Currency from, Currency to) throws Exception {
         return value * exchangeRate(from, to);
     }
 

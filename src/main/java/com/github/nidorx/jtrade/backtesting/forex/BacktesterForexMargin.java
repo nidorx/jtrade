@@ -173,7 +173,7 @@ public class BacktesterForexMargin {
             margin = volume * getInitialMargin() / account.getLeverage();
         } else {
             // Volume in lots * Contract size / Leverage
-            margin = volume * instument.getContractSize() / account.getLeverage();
+            margin = volume * instument.contractSize / account.getLeverage();
         }
 
         return margin;
