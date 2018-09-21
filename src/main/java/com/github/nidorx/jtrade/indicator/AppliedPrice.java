@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.indicator;
 
-import com.github.nidorx.jtrade.OHLC;
+import com.github.nidorx.jtrade.Rate;
 import java.util.function.Function;
 
 /**
@@ -45,18 +45,18 @@ public class AppliedPrice {
      */
     public static final AppliedPrice WEIGHTED = new AppliedPrice(r -> (r.high + r.low + r.close + r.close) / 4);
 
-    private final Function<OHLC, Double> apply;
+    private final Function<Rate, Double> apply;
 
-    private AppliedPrice(Function<OHLC, Double> apply) {
+    private AppliedPrice(Function<Rate, Double> apply) {
         this.apply = apply;
     }
 
-    public double apply(OHLC rate) {
+    public double apply(Rate rate) {
         return apply.apply(rate);
     }
 
     public double apply(double open, double close, double high, double low) {
-        return apply(new OHLC(0, open, high, low, close));
+        return apply(new Rate(0, open, high, low, close));
     }
 
     public enum APPLIED {

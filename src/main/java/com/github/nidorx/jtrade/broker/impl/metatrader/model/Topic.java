@@ -8,8 +8,7 @@ package com.github.nidorx.jtrade.broker.impl.metatrader.model;
 public enum Topic {
 
     TICK(1),
-    RATES(2)
-    ;
+    RATES(2);
 
     public static Topic getByCode(int code) {
         for (Topic value : values()) {

@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.broker.impl;
 
-import com.github.nidorx.jtrade.OHLC;
+import com.github.nidorx.jtrade.Rate;
 import com.github.nidorx.jtrade.TimeSeries;
 import com.github.nidorx.jtrade.util.TimeSeriesGeneric;
 import java.time.Instant;
@@ -11,10 +11,10 @@ import java.util.List;
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-public abstract class TimeSeriesImpl extends TimeSeriesGeneric<OHLC> implements TimeSeries {
+public abstract class TimeSeriesImpl extends TimeSeriesGeneric<Rate> implements TimeSeries {
 
     @Override
-    protected Instant extract(OHLC item) {
+    protected Instant extract(Rate item) {
         return Instant.ofEpochMilli(item.time);
     }
 
@@ -119,27 +119,27 @@ public abstract class TimeSeriesImpl extends TimeSeriesGeneric<OHLC> implements 
     }
 
     @Override
-    public List<OHLC> rates(int count) {
+    public List<Rate> rates(int count) {
         return list(count);
     }
 
     @Override
-    public List<OHLC> rates(Instant stop) {
+    public List<Rate> rates(Instant stop) {
         return list(stop);
     }
 
     @Override
-    public List<OHLC> rates(int start, int count) {
+    public List<Rate> rates(int start, int count) {
         return list(start, count);
     }
 
     @Override
-    public List<OHLC> rates(Instant start, int count) {
+    public List<Rate> rates(Instant start, int count) {
         return list(start, count);
     }
 
     @Override
-    public List<OHLC> rates(Instant start, Instant stop) {
+    public List<Rate> rates(Instant start, Instant stop) {
         return list(start, stop);
     }
 

@@ -5,10 +5,14 @@ import com.github.nidorx.jtrade.Tick;
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.Instrument;
+import com.github.nidorx.jtrade.Rate;
+import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Integração com o Metatrader usando socket
@@ -37,9 +41,19 @@ public class MetatraderBroker extends Broker {
         client.connect();
 
         // Observa novos ticks
-        client.subscribe(Topic.TICK, (t) -> {
-            final Tick tick = new Tick(t);
-            System.out.println(tick);
+        client.subscribe(Topic.TICK, (message) -> {
+            final Tick tick = new Tick(message);
+            this.onTick(tick);
+        });
+
+        // Observa novos candles
+        client.subscribe(Topic.RATES, (message) -> {
+            try {
+                final Rate rate = new Rate(message);
+                this.onRate(rate);
+            } catch (Exception ex) {
+                Logger.getLogger(MetatraderBroker.class.getName()).log(Level.SEVERE, null, ex);
+            }
         });
     }
 

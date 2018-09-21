@@ -64,7 +64,7 @@ public abstract class Strategy {
      *
      * @param rates
      */
-    public abstract void onRates(OHLC rates);
+    public abstract void onRate(Rate rates);
 
     /**
      * Permite a implementação do indicador executar quaisquer rotinas de limpeza quando este indicador for desconectado

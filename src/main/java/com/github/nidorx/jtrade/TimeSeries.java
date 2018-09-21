@@ -34,14 +34,14 @@ public interface TimeSeries {
      *
      * @return
      */
-    OHLC first();
+    Rate first();
 
     /**
      * Obtém a informação de preços e volumes mais recente
      *
      * @return
      */
-    OHLC last();
+    Rate last();
 
     /**
      * Obtém a informação de preços e volumes pra um instante específico, ou null caso não exista valores para o
@@ -50,14 +50,14 @@ public interface TimeSeries {
      * @param instant
      * @return
      */
-    OHLC one(Instant instant);
+    Rate one(Instant instant);
 
     /**
      * Permite acesso ao stream dos registros deste TimeSeries
      *
      * @return
      */
-    Stream<Map.Entry<Instant, OHLC>> stream();
+    Stream<Map.Entry<Instant, Rate>> stream();
 
     /**
      * https://www.mql5.com/en/docs/series/copyopen
@@ -138,15 +138,15 @@ public interface TimeSeries {
      * @param count
      * @return
      */
-    List<OHLC> rates(int count);
+    List<Rate> rates(int count);
 
-    List<OHLC> rates(Instant stop);
+    List<Rate> rates(Instant stop);
 
-    List<OHLC> rates(int start, int count);
+    List<Rate> rates(int start, int count);
 
-    List<OHLC> rates(Instant start, int count);
+    List<Rate> rates(Instant start, int count);
 
-    List<OHLC> rates(Instant start, Instant stop);
+    List<Rate> rates(Instant start, Instant stop);
 
     /**
      * https://www.mql5.com/en/docs/series/copytime

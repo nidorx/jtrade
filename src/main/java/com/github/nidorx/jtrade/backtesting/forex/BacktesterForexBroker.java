@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade.backtesting.forex;
 
 import com.github.nidorx.jtrade.util.Util;
-import com.github.nidorx.jtrade.OHLC;
+import com.github.nidorx.jtrade.Rate;
 import com.github.nidorx.jtrade.Strategy;
 import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.backtesting.BacktesterBroker;
@@ -103,10 +103,10 @@ public class BacktesterForexBroker extends BacktesterBroker {
             // ---------------------------------------------------------------------------------------------------------
 
             // O tick anterior
-            final OHLC lastTick = rates(instrument, timeframe);
+            final Rate lastTick = rates(instrument, timeframe);
 
             // @TODO: O novo tick
-            final OHLC tick = rates(instrument, timeframe);
+            final Rate tick = rates(instrument, timeframe);
 
             try {
                 List<Order> orders = getOrders(instrument);
@@ -174,9 +174,9 @@ public class BacktesterForexBroker extends BacktesterBroker {
     }
 
     @Override
-    protected List<OHLC> requestTimeSeries(Instrument instrument, TimeFrame timeFrame, Instant start, Instant end) throws Exception {
+    protected List<Rate> requestTimeSeries(Instrument instrument, TimeFrame timeFrame, Instant start, Instant end) throws Exception {
 
-        final List<OHLC> timeSeries = new ArrayList();
+        final List<Rate> timeSeries = new ArrayList();
         long days = TimeUnit.SECONDS.toDays(end.getEpochSecond() - start.getEpochSecond());
 
         GoogleFinanceAPI.get(
@@ -186,7 +186,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
         ).entrySet().stream().forEach((t) -> {
             Instant instant = t.getKey();
             double[] val = t.getValue();
-            timeSeries.add(new OHLC(t.getKey().getEpochSecond(), val[0], val[1], val[2], val[3]));
+            timeSeries.add(new Rate(t.getKey().getEpochSecond(), val[0], val[1], val[2], val[3]));
         });
 
         return timeSeries;
@@ -240,7 +240,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     public double bid(Instrument instrument) {
         return DOUBLE_CACHE.get("bid_" + instrument.getSymbol(), () -> {
             for (TimeFrame timeFrame : TimeFrame.all()) {
-                OHLC tick = rates(instrument, timeFrame);
+                Rate tick = rates(instrument, timeFrame);
                 if (tick != null) {
                     // Número aleatório entre o fechamento anterior decrementado de 0 a -10% do tamanho do corpo do tick
                     double spread = Math.abs(tick.open - tick.close) * 0.1;
@@ -256,7 +256,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     public double ask(Instrument instrument) {
         return DOUBLE_CACHE.get("bid_" + instrument.getSymbol(), () -> {
             for (TimeFrame timeFrame : TimeFrame.all()) {
-                OHLC tick = rates(instrument, timeFrame);
+                Rate tick = rates(instrument, timeFrame);
                 if (tick != null) {
                     // Número aleatório entre o fechamento anterior acrescido de 0 a -10% do tamanho do corpo do tick
                     double spread = Math.abs(tick.open - tick.close) * 0.1;
@@ -290,7 +290,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     private void fillValidOrder(final Order order) throws TradeException {
 
         final Instrument instrument = order.getInstrument();
-        final OHLC tick = rates(instrument);
+        final Rate tick = rates(instrument);
         final Instant instant = Instant.ofEpochSecond(tick.time + 5);
         final double ask = ask(instrument);
         final double bid = bid(instrument);
@@ -712,7 +712,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
         final Instrument instrument = position.getInstrument();
         double volume = position.volume();
         long id = SEQ.incrementAndGet();
-        final OHLC tick = rates(instrument);
+        final Rate tick = rates(instrument);
         final Instant instant = Instant.ofEpochSecond(tick.time + 5);
 
         if (position.getType().equals(PositionType.BUY)) {
@@ -761,7 +761,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
 
         final Instrument instrument = position.getInstrument();
         long id = SEQ.incrementAndGet();
-        final OHLC tick = rates(instrument);
+        final Rate tick = rates(instrument);
         final Instant instant = Instant.ofEpochSecond(tick.time + 5);
 
         if (position.getType().equals(PositionType.BUY)) {

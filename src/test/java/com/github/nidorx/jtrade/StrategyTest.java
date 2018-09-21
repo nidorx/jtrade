@@ -53,7 +53,7 @@ public class StrategyTest {
         }
 
         @Override
-        public void onRates(OHLC ohlc) {
+        public void onRate(Rate ohlc) {
         }
 
         @Override

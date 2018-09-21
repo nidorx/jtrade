@@ -26,68 +26,68 @@ public final class Candlestick {
     /**
      * Padrão de Candles Brancos
      */
-    private static final Predicate<OHLC> WHITE = (ohlc) -> ohlc.open < ohlc.close;
+    private static final Predicate<Rate> WHITE = (ohlc) -> ohlc.open < ohlc.close;
 
     /**
      * Padrão de Candles negros
      */
-    private static final Predicate<OHLC> BLACK = (ohlc) -> ohlc.open > ohlc.close;
+    private static final Predicate<Rate> BLACK = (ohlc) -> ohlc.open > ohlc.close;
 
     /**
      * Padrão de Candle que possui sombra superior
      */
-    private static final Predicate<OHLC> UPPER_SHADOW = (ohlc) -> ohlc.high > Math.max(ohlc.open, ohlc.close);
+    private static final Predicate<Rate> UPPER_SHADOW = (ohlc) -> ohlc.high > Math.max(ohlc.open, ohlc.close);
 
     /**
      * Padrão de Candle que possui sombra inferior
      */
-    private static final Predicate<OHLC> LOWER_SHADOW = (ohlc) -> ohlc.low < Math.min(ohlc.open, ohlc.close);
+    private static final Predicate<Rate> LOWER_SHADOW = (ohlc) -> ohlc.low < Math.min(ohlc.open, ohlc.close);
 
     /**
      * Padrão de Candle que possui sombra superior e inferior
      */
-    private static final Predicate<OHLC> ALL_SHADOW = UPPER_SHADOW.and(LOWER_SHADOW);
+    private static final Predicate<Rate> ALL_SHADOW = UPPER_SHADOW.and(LOWER_SHADOW);
 
     /**
      * Padrão de Candle que possui ALGUMA sombra superior e inferior
      */
-    private static final Predicate<OHLC> ANY_SHADOW = UPPER_SHADOW.or(LOWER_SHADOW);
+    private static final Predicate<Rate> ANY_SHADOW = UPPER_SHADOW.or(LOWER_SHADOW);
 
     /**
      * Padrão de Candle que NÃO POSSUI sombra
      */
-    private static final Predicate<OHLC> NO_SHADOW = ANY_SHADOW.negate();
+    private static final Predicate<Rate> NO_SHADOW = ANY_SHADOW.negate();
 
     /**
      * Padrão de Candle onde a sombra superior é maior do que o corpo
      */
-    private static final Predicate<OHLC> UPPER_SHADOW_LARGER_THAN_BODY = UPPER_SHADOW.and((ohlc) -> {
+    private static final Predicate<Rate> UPPER_SHADOW_LARGER_THAN_BODY = UPPER_SHADOW.and((ohlc) -> {
         return (ohlc.high - Math.max(ohlc.open, ohlc.close)) > body(ohlc);
     });
 
     /**
      * Padrão de Candle onde a sombra inferior é maior do que o corpo
      */
-    private static final Predicate<OHLC> LOWER_SHADOW_LARGER_THAN_BODY = LOWER_SHADOW.and((ohlc) -> {
+    private static final Predicate<Rate> LOWER_SHADOW_LARGER_THAN_BODY = LOWER_SHADOW.and((ohlc) -> {
         return (Math.min(ohlc.open, ohlc.close) - ohlc.low) > body(ohlc);
     });
 
     /**
      * Padrão de Candle onde TODAS as sombras são maiores do que o corpo
      */
-    private static final Predicate<OHLC> ALL_SHADOW_LARGER_THAN_BODY
+    private static final Predicate<Rate> ALL_SHADOW_LARGER_THAN_BODY
             = UPPER_SHADOW_LARGER_THAN_BODY.and(LOWER_SHADOW_LARGER_THAN_BODY);
 
     /**
      * Padrão de Candle onde ALGUMA as sombras são maiores do que o corpo
      */
-    private static final Predicate<OHLC> ANY_SHADOW_LARGER_THAN_BODY
+    private static final Predicate<Rate> ANY_SHADOW_LARGER_THAN_BODY
             = UPPER_SHADOW_LARGER_THAN_BODY.or(LOWER_SHADOW_LARGER_THAN_BODY);
 
     /**
      * Padrão de Candle onde NENHUMA das sombras é maior do que o corpo
      */
-    private static final Predicate<OHLC> NO_SHADOW_LARGER_THAN_BODY = ANY_SHADOW_LARGER_THAN_BODY.negate();
+    private static final Predicate<Rate> NO_SHADOW_LARGER_THAN_BODY = ANY_SHADOW_LARGER_THAN_BODY.negate();
 
     /**
      * Verifica se o item atual da lista de valores é um LONG LINE.
@@ -100,9 +100,9 @@ public final class Candlestick {
      * @see Candlestick#averageDistance(java.util.List, int)
      * @see Candlestick#size(info.alexrodin.ta.OHLC)
      */
-    public static final Predicate<List<OHLC>> LONG_LINE = (rates) -> {
+    public static final Predicate<List<Rate>> LONG_LINE = (rates) -> {
         double avg = averageDistance(rates, 25);
-        final OHLC ohlc = rates.get(0);
+        final Rate ohlc = rates.get(0);
         return size(ohlc) >= avg * 0.7;
     };
 
@@ -118,12 +118,12 @@ public final class Candlestick {
      * @see Candlestick#averageDistance(java.util.List, int)
      * @see Candlestick#size(info.alexrodin.ta.OHLC)
      */
-    public static final Predicate<List<OHLC>> SHORT_LINE = LONG_LINE.negate();
+    public static final Predicate<List<Rate>> SHORT_LINE = LONG_LINE.negate();
 
     /**
      * O corpo da vela é três vezes maior do que a média do tamanho dos corpos das últimas 5 ou 10 velas
      */
-    public static final Predicate<List<OHLC>> LONG_CANDLE = (rates) -> {
+    public static final Predicate<List<Rate>> LONG_CANDLE = (rates) -> {
         final int avgPeriod = 10;
 
         if (rates.size() < avgPeriod) {
@@ -150,7 +150,7 @@ public final class Candlestick {
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-white-candle/
      */
-    public static final Predicate<List<OHLC>> LONG_WHITE_CANDLE = (rates) -> {
+    public static final Predicate<List<Rate>> LONG_WHITE_CANDLE = (rates) -> {
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
         // ░┌┴┐░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -187,7 +187,7 @@ public final class Candlestick {
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-black-candle/
      */
-    public static final Predicate<List<OHLC>> LONG_BLACK_CANDLE = (rates) -> {
+    public static final Predicate<List<Rate>> LONG_BLACK_CANDLE = (rates) -> {
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
         // ░┌┴┐░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -224,7 +224,7 @@ public final class Candlestick {
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-black-candle/
      */
-    public static final Predicate<List<OHLC>> WHITE_CANDLE = (rates) -> {
+    public static final Predicate<List<Rate>> WHITE_CANDLE = (rates) -> {
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -261,7 +261,7 @@ public final class Candlestick {
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-black-candle/
      */
-    public static final Predicate<List<OHLC>> BLACK_CANDLE = (rates) -> {
+    public static final Predicate<List<Rate>> BLACK_CANDLE = (rates) -> {
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
         // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -282,167 +282,167 @@ public final class Candlestick {
                 .test(rates.get(0));
     };
 
-    public static final Predicate<List<OHLC>> DOJI = (rates) -> {
+    public static final Predicate<List<Rate>> DOJI = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> DRAGONFLY_DOJI = (rates) -> {
+    public static final Predicate<List<Rate>> DRAGONFLY_DOJI = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> GRAVESTONE_DOJI = (rates) -> {
+    public static final Predicate<List<Rate>> GRAVESTONE_DOJI = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> LONG_LEGGED_DOJI = (rates) -> {
+    public static final Predicate<List<Rate>> LONG_LEGGED_DOJI = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> HANGING_MAN = (rates) -> {
+    public static final Predicate<List<Rate>> HANGING_MAN = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> HAMMER = (rates) -> {
+    public static final Predicate<List<Rate>> HAMMER = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> INVERTED_BLACK_HAMMER = (rates) -> {
+    public static final Predicate<List<Rate>> INVERTED_BLACK_HAMMER = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> INVERTED_HAMMER = (rates) -> {
+    public static final Predicate<List<Rate>> INVERTED_HAMMER = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> LONG_LOWER_SHADOW = (rates) -> {
+    public static final Predicate<List<Rate>> LONG_LOWER_SHADOW = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> LONG_UPPER_SHADOW = (rates) -> {
+    public static final Predicate<List<Rate>> LONG_UPPER_SHADOW = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> MARUBOZU = (rates) -> {
+    public static final Predicate<List<Rate>> MARUBOZU = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> SHOOTING_STAR = (rates) -> {
+    public static final Predicate<List<Rate>> SHOOTING_STAR = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> SPINNING_TOP = (rates) -> {
+    public static final Predicate<List<Rate>> SPINNING_TOP = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> WHITE_BODY = (rates) -> {
+    public static final Predicate<List<Rate>> WHITE_BODY = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> SHAVEN_BOTTOM = (rates) -> {
+    public static final Predicate<List<Rate>> SHAVEN_BOTTOM = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> SHAVEN_HEAD = (rates) -> {
+    public static final Predicate<List<Rate>> SHAVEN_HEAD = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> BEARISH_HARAMI = (rates) -> {
+    public static final Predicate<List<Rate>> BEARISH_HARAMI = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> BEARISH_HARAMI_CROSS = (rates) -> {
+    public static final Predicate<List<Rate>> BEARISH_HARAMI_CROSS = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> BEARISH_3_METHOD_FORMATION = (rates) -> {
+    public static final Predicate<List<Rate>> BEARISH_3_METHOD_FORMATION = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> BULLISH_3_METHOD_FORMATION = (rates) -> {
+    public static final Predicate<List<Rate>> BULLISH_3_METHOD_FORMATION = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> BULLISH_HARAMI = (rates) -> {
+    public static final Predicate<List<Rate>> BULLISH_HARAMI = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> BULLISH_HARAMI_CROSS = (rates) -> {
+    public static final Predicate<List<Rate>> BULLISH_HARAMI_CROSS = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> DARK_CLOUD_COVER = (rates) -> {
+    public static final Predicate<List<Rate>> DARK_CLOUD_COVER = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> ENGULFING_BEARISH_LINE = (rates) -> {
+    public static final Predicate<List<Rate>> ENGULFING_BEARISH_LINE = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> ENGULFING_BULLISH = (rates) -> {
+    public static final Predicate<List<Rate>> ENGULFING_BULLISH = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> EVENING_DOJI_STAR = (rates) -> {
+    public static final Predicate<List<Rate>> EVENING_DOJI_STAR = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> FALLING_WINDOW = (rates) -> {
+    public static final Predicate<List<Rate>> FALLING_WINDOW = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> MORNING_DOJI_STAR = (rates) -> {
+    public static final Predicate<List<Rate>> MORNING_DOJI_STAR = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> MORNING_STAR = (rates) -> {
+    public static final Predicate<List<Rate>> MORNING_STAR = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> ON_NECKLINE = (rates) -> {
+    public static final Predicate<List<Rate>> ON_NECKLINE = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> TWO_BLACK_GAPPING = (rates) -> {
+    public static final Predicate<List<Rate>> TWO_BLACK_GAPPING = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> THREE_BLACK_CROWS = (rates) -> {
+    public static final Predicate<List<Rate>> THREE_BLACK_CROWS = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> THREE_WHITE_SOLDIERS = (rates) -> {
+    public static final Predicate<List<Rate>> THREE_WHITE_SOLDIERS = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> THREE_LINE_STRIKE = (rates) -> {
+    public static final Predicate<List<Rate>> THREE_LINE_STRIKE = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> TWEEZER_BOTTOMS = (rates) -> {
+    public static final Predicate<List<Rate>> TWEEZER_BOTTOMS = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> TWEEZER_TOPS = (rates) -> {
+    public static final Predicate<List<Rate>> TWEEZER_TOPS = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> DOJI_STAR = (rates) -> {
+    public static final Predicate<List<Rate>> DOJI_STAR = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> PIERCING_LINE = (rates) -> {
+    public static final Predicate<List<Rate>> PIERCING_LINE = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> RISING_WINDOW = (rates) -> {
+    public static final Predicate<List<Rate>> RISING_WINDOW = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> EVENING_STAR = (rates) -> {
+    public static final Predicate<List<Rate>> EVENING_STAR = (rates) -> {
         return false;
     };
 
-    public static final Predicate<List<OHLC>> ABANDONED_BABY = (rates) -> {
+    public static final Predicate<List<Rate>> ABANDONED_BABY = (rates) -> {
         return false;
     };
 
@@ -454,7 +454,7 @@ public final class Candlestick {
      * @param ohlc
      * @return
      */
-    private static double size(final OHLC ohlc) {
+    private static double size(final Rate ohlc) {
         return ohlc.high - ohlc.low;
     }
 
@@ -464,7 +464,7 @@ public final class Candlestick {
      * @param ohlc
      * @return
      */
-    private static double body(final OHLC ohlc) {
+    private static double body(final Rate ohlc) {
         return Math.abs(ohlc.open - ohlc.close);
     }
 
@@ -475,11 +475,11 @@ public final class Candlestick {
      * @param period
      * @return
      */
-    private static double averageBody(List<OHLC> rates, int period) {
+    private static double averageBody(List<Rate> rates, int period) {
         return cached("averageBody", rates, period, () -> {
             double sum = 0.0;
             for (int i = 0, j = rates.size(); i < j; i++) {
-                final OHLC ohlc = rates.get(i);
+                final Rate ohlc = rates.get(i);
                 sum += body(ohlc);
             }
 
@@ -499,11 +499,11 @@ public final class Candlestick {
      * @see Candlestick#size(info.alexrodin.ta.OHLC)
      * @see http://www.candlescanner.com/candlestick-patterns/long-and-short-lines/
      */
-    private static double averageDistance(List<OHLC> rates, int period) {
+    private static double averageDistance(List<Rate> rates, int period) {
         return cached("averageDistance", rates, period, () -> {
             double exponent = 2.0 / (period + 1);
             int start = Math.min(rates.size() - 1, period);
-            OHLC ohlc = rates.get(start);
+            Rate ohlc = rates.get(start);
 
             // Primeiro registro (mais antigo), o EMA nao possui valores
             double ema = size(ohlc);
@@ -525,7 +525,7 @@ public final class Candlestick {
      * @param period
      * @return
      */
-    private static double cached(final String method, final List<OHLC> rates, final int period, final Supplier<Double> exec) {
+    private static double cached(final String method, final List<Rate> rates, final int period, final Supplier<Double> exec) {
         String key = method + "_" + rates.hashCode() + "_" + period;
         Double value = CACHE_RESULT.get(key);
         if (value == null) {

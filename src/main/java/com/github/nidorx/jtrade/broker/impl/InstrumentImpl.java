@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade.broker.impl;
 
 import com.github.nidorx.jtrade.Instrument;
-import com.github.nidorx.jtrade.OHLC;
+import com.github.nidorx.jtrade.Rate;
 import com.github.nidorx.jtrade.Tick;
 import com.github.nidorx.jtrade.TimeFrame;
 import com.github.nidorx.jtrade.TimeSeries;
@@ -78,12 +78,12 @@ public class InstrumentImpl extends Instrument {
         }
     }
 
-    public void onRates(TimeFrame timeFrame, OHLC ohlc) {
-        if (!timeSeries.containsKey(timeFrame)) {
+    public void onRate(Rate rate) {
+        if (!timeSeries.containsKey(rate.timeframe)) {
             return;
         }
 
-        ((TimeSeriesImpl) timeSeries.get(timeFrame)).add(ohlc);
+        ((TimeSeriesImpl) timeSeries.get(rate.timeframe)).add(rate);
 
         // Após o processamento, salva o timeséries em disco, evita re-consultas ao broker
 //            final String timeSeriesName = getName() + "_" + instrument.getSymbol() + "_" + timeFrame.name();;

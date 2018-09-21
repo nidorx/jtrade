@@ -44,6 +44,7 @@ public enum TimeFrame {
     MN1(D1.seconds * 30);
 
     public final int seconds;
+
     public final int minutes;
 
     private TimeFrame(int seconds) {
@@ -53,5 +54,14 @@ public enum TimeFrame {
 
     public static TimeFrame[] all() {
         return new TimeFrame[]{M1, M5, M15, M30, H1, H4, D1, W1, MN1};
+    }
+
+    public static TimeFrame ofSeconds(int seconds) {
+        for (TimeFrame tf : values()) {
+            if (tf.seconds == seconds) {
+                return tf;
+            }
+        }
+        return null;
     }
 }

@@ -5,7 +5,7 @@ import com.github.nidorx.jtrade.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.util.Cancelable;
-import com.github.nidorx.jtrade.OHLC;
+import com.github.nidorx.jtrade.Rate;
 import com.github.nidorx.jtrade.Strategy;
 import com.github.nidorx.jtrade.Tick;
 import com.github.nidorx.jtrade.TimeFrame;
@@ -374,23 +374,21 @@ public abstract class Broker {
     /**
      * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
      *
-     * @param symbol
-     * @param timeFrame
-     * @param rates
+     * @param rate
      * @throws java.lang.Exception
      */
-    protected void onRates(String symbol, TimeFrame timeFrame, OHLC rates) throws Exception {
+    protected void onRate(Rate rate) throws Exception {
 
-        final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
+        final InstrumentImpl instrument = (InstrumentImpl) getInstrument(rate.symbol);
         if (instrument != null) {
 
             // Informa ao instrumento
-            instrument.onRates(timeFrame, rates);
+            instrument.onRate(rate);
 
-            final Strategy strategy = getStrategy(symbol);
+            final Strategy strategy = getStrategy(rate.symbol);
             if (strategy != null) {
                 // Informa à estratégia
-                strategy.onRates(rates);
+                strategy.onRate(rate);
             }
         }
     }

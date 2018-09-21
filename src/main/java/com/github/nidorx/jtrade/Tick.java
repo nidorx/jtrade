@@ -23,7 +23,7 @@ public class Tick {
     public final double volume;
 
     /**
-     * No formato "TIME BID ASK LAST VOLUME"
+     * No formato "SYMBOL TIME BID ASK LAST VOLUME"
      *
      * Ex. "EURUSD 1537429422098 0.88823000 0.88835000 0.00000000 0"
      *
