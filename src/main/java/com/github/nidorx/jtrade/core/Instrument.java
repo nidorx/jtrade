@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade;
+package com.github.nidorx.jtrade.core;
 
 import java.time.Instant;
 import java.util.Currency;

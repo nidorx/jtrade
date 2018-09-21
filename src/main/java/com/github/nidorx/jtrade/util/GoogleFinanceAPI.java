@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.util;
 
-import com.github.nidorx.jtrade.TimeFrame;
+import com.github.nidorx.jtrade.core.TimeFrame;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;

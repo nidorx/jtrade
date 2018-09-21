@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade;
+package com.github.nidorx.jtrade.core;
 
 import com.github.nidorx.jtrade.util.SDParser;
 import java.util.HashMap;

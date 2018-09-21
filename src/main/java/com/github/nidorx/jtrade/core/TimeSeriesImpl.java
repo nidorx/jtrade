@@ -1,7 +1,5 @@
-package com.github.nidorx.jtrade.broker.impl;
+package com.github.nidorx.jtrade.core;
 
-import com.github.nidorx.jtrade.Rate;
-import com.github.nidorx.jtrade.TimeSeries;
 import com.github.nidorx.jtrade.util.TimeSeriesGeneric;
 import java.time.Instant;
 import java.util.List;
@@ -11,7 +9,7 @@ import java.util.List;
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-public abstract class TimeSeriesImpl extends TimeSeriesGeneric<Rate> implements TimeSeries {
+public final class TimeSeriesImpl extends TimeSeriesGeneric<Rate> implements TimeSeries {
 
     @Override
     protected Instant extract(Rate item) {

@@ -1,9 +1,9 @@
 package com.github.nidorx.jtrade.backtesting.forex;
 
 import com.github.nidorx.jtrade.util.Util;
-import com.github.nidorx.jtrade.Rate;
-import com.github.nidorx.jtrade.Strategy;
-import com.github.nidorx.jtrade.TimeFrame;
+import com.github.nidorx.jtrade.core.Rate;
+import com.github.nidorx.jtrade.core.Strategy;
+import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.backtesting.BacktesterBroker;
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.trading.Deal;
@@ -16,7 +16,7 @@ import com.github.nidorx.jtrade.broker.trading.DealType;
 import com.github.nidorx.jtrade.broker.trading.PositionType;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.exception.TradeExceptionReason;
-import com.github.nidorx.jtrade.Instrument;
+import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.util.GoogleFinanceAPI;
 import com.github.nidorx.jtrade.util.SimpleCache;
 import java.time.Instant;
@@ -239,7 +239,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     @Override
     public double bid(Instrument instrument) {
         return DOUBLE_CACHE.get("bid_" + instrument.getSymbol(), () -> {
-            for (TimeFrame timeFrame : TimeFrame.all()) {
+            for (TimeFrame timeFrame : TimeFrame.values()) {
                 Rate tick = rates(instrument, timeFrame);
                 if (tick != null) {
                     // Número aleatório entre o fechamento anterior decrementado de 0 a -10% do tamanho do corpo do tick
@@ -255,7 +255,7 @@ public class BacktesterForexBroker extends BacktesterBroker {
     @Override
     public double ask(Instrument instrument) {
         return DOUBLE_CACHE.get("bid_" + instrument.getSymbol(), () -> {
-            for (TimeFrame timeFrame : TimeFrame.all()) {
+            for (TimeFrame timeFrame : TimeFrame.values()) {
                 Rate tick = rates(instrument, timeFrame);
                 if (tick != null) {
                     // Número aleatório entre o fechamento anterior acrescido de 0 a -10% do tamanho do corpo do tick

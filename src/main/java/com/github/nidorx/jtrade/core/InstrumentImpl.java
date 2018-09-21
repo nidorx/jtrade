@@ -1,10 +1,5 @@
-package com.github.nidorx.jtrade.broker.impl;
+package com.github.nidorx.jtrade.core;
 
-import com.github.nidorx.jtrade.Instrument;
-import com.github.nidorx.jtrade.Rate;
-import com.github.nidorx.jtrade.Tick;
-import com.github.nidorx.jtrade.TimeFrame;
-import com.github.nidorx.jtrade.TimeSeries;
 import com.github.nidorx.jtrade.util.TimeSeriesGeneric;
 import java.time.Instant;
 import java.util.Currency;
@@ -17,9 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-public class InstrumentImpl extends Instrument {
+public final class InstrumentImpl extends Instrument {
 
-    private final Map<TimeFrame, TimeSeries> timeSeries;
+    private final Map<TimeFrame, TimeSeries> timeSeries = new ConcurrentHashMap<>();
 
     private final TimeSeriesGeneric<Tick> ticks = new TimeSeriesGeneric<Tick>() {
         @Override
@@ -28,32 +23,32 @@ public class InstrumentImpl extends Instrument {
         }
     };
 
+    private double bid = 0D;
+
+    private double ask = 0D;
+
     public InstrumentImpl(String symbol, Currency base, Currency quote) {
         super(symbol, base, quote);
-        this.timeSeries = new ConcurrentHashMap<>(TimeFrame.all().length);
+        initTimeseries();
     }
 
     public InstrumentImpl(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) {
         super(symbol, base, quote, digits, contractSize, tickValue);
-        this.timeSeries = new ConcurrentHashMap<>(TimeFrame.all().length);
+        initTimeseries();
     }
 
     @Override
     public double bid() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return bid;
     }
 
     @Override
     public double ask() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return ask;
     }
 
     @Override
     public TimeSeries timeSeries(TimeFrame timeFrame) {
-        if (!timeSeries.containsKey(timeFrame)) {
-            return null;
-        }
-
         return timeSeries.get(timeFrame);
     }
 
@@ -72,13 +67,15 @@ public class InstrumentImpl extends Instrument {
         return ticks.list(start, stop);
     }
 
-    public void onTick(Tick tick) {
+    public void processTick(Tick tick) {
         if (tick.symbol.equals(this.symbol)) {
             ticks.add(tick);
+            bid = tick.bid;
+            ask = tick.ask;
         }
     }
 
-    public void onRate(Rate rate) {
+    public void processRate(Rate rate) {
         if (!timeSeries.containsKey(rate.timeframe)) {
             return;
         }
@@ -88,6 +85,12 @@ public class InstrumentImpl extends Instrument {
         // Após o processamento, salva o timeséries em disco, evita re-consultas ao broker
 //            final String timeSeriesName = getName() + "_" + instrument.getSymbol() + "_" + timeFrame.name();;
 //            persistTimeseries(timeSeriesName, tsGlobal);
+    }
+
+    private void initTimeseries() {
+        for (TimeFrame timeframe : TimeFrame.values()) {
+            timeSeries.put(timeframe, new TimeSeriesImpl());
+        }
     }
 
 }

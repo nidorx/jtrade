@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade.indicator.impl;
 
 import com.github.nidorx.jtrade.indicator.impl.IndicatorMovingAverage;
-import com.github.nidorx.jtrade.TimeSeries;
+import com.github.nidorx.jtrade.core.TimeSeries;
 import com.github.nidorx.jtrade.indicator.AppliedPrice;
 import com.github.nidorx.jtrade.indicator.Output;
 import java.time.Instant;

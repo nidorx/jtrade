@@ -2,11 +2,11 @@ package com.github.nidorx.jtrade.backtesting;
 
 import com.github.nidorx.jtrade.util.Cancelable;
 import com.github.nidorx.jtrade.backtesting.forex.BacktesterForexBroker;
-import com.github.nidorx.jtrade.Strategy;
-import com.github.nidorx.jtrade.TimeFrame;
+import com.github.nidorx.jtrade.core.Strategy;
+import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.broker.Account;
-import com.github.nidorx.jtrade.Instrument;
+import com.github.nidorx.jtrade.core.Instrument;
 import java.time.Instant;
 
 /**

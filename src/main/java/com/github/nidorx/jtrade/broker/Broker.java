@@ -1,14 +1,13 @@
 package com.github.nidorx.jtrade.broker;
 
-import com.github.nidorx.jtrade.broker.impl.InstrumentImpl;
-import com.github.nidorx.jtrade.Instrument;
+import com.github.nidorx.jtrade.core.InstrumentImpl;
+import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.util.Cancelable;
-import com.github.nidorx.jtrade.Rate;
-import com.github.nidorx.jtrade.Strategy;
-import com.github.nidorx.jtrade.Tick;
-import com.github.nidorx.jtrade.TimeFrame;
+import com.github.nidorx.jtrade.core.Rate;
+import com.github.nidorx.jtrade.core.Strategy;
+import com.github.nidorx.jtrade.core.Tick;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -345,7 +344,7 @@ public abstract class Broker {
      *
      * @param tick
      */
-    protected void onTick(Tick tick) {
+    protected void processTick(Tick tick) {
 
         try {
             // Atualiza a data conhecida do servidor
@@ -358,7 +357,7 @@ public abstract class Broker {
             if (instrument != null) {
 
                 // Informa ao instrumento sobre o novo tick
-                instrument.onTick(tick);
+                instrument.processTick(tick);
 
                 final Strategy strategy = getStrategy(tick.symbol);
                 if (strategy != null) {
@@ -377,13 +376,13 @@ public abstract class Broker {
      * @param rate
      * @throws java.lang.Exception
      */
-    protected void onRate(Rate rate) throws Exception {
+    protected void processRate(Rate rate) throws Exception {
 
         final InstrumentImpl instrument = (InstrumentImpl) getInstrument(rate.symbol);
         if (instrument != null) {
 
             // Informa ao instrumento
-            instrument.onRate(rate);
+            instrument.processRate(rate);
 
             final Strategy strategy = getStrategy(rate.symbol);
             if (strategy != null) {

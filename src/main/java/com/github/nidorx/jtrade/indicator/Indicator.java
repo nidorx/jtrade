@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade.indicator;
 
 import com.github.nidorx.jtrade.util.Cancelable;
-import com.github.nidorx.jtrade.TimeSeries;
+import com.github.nidorx.jtrade.core.TimeSeries;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;

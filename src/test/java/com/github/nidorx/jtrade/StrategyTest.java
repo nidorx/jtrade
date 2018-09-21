@@ -1,5 +1,8 @@
 package com.github.nidorx.jtrade;
 
+import com.github.nidorx.jtrade.core.Strategy;
+import com.github.nidorx.jtrade.core.Tick;
+import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.broker.Account;
 import java.time.Instant;
 import org.junit.Before;

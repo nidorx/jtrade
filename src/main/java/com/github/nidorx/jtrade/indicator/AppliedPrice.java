@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.indicator;
 
-import com.github.nidorx.jtrade.Rate;
+import com.github.nidorx.jtrade.core.Rate;
 import java.util.function.Function;
 
 /**

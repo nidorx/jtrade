@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade.broker.trading;
 
 import com.github.nidorx.jtrade.broker.Broker;
-import com.github.nidorx.jtrade.Instrument;
+import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import java.time.Instant;
 import java.util.ArrayList;

@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Implementação genérica para gerenciamento de TimeSéries
+ * Implementação genérica para gerenciamento de séries temporais
  *
  * @author Alex Rodin <contato@alexrodin.info>
  * @param <T>

@@ -1,12 +1,12 @@
 package com.github.nidorx.jtrade.broker.impl.metatrader;
 
 import com.github.nidorx.jtrade.broker.impl.metatrader.model.Topic;
-import com.github.nidorx.jtrade.Tick;
+import com.github.nidorx.jtrade.core.Tick;
 import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
-import com.github.nidorx.jtrade.Instrument;
-import com.github.nidorx.jtrade.Rate;
-import com.github.nidorx.jtrade.TimeFrame;
+import com.github.nidorx.jtrade.core.Instrument;
+import com.github.nidorx.jtrade.core.Rate;
+import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.broker.trading.Position;
@@ -43,14 +43,14 @@ public class MetatraderBroker extends Broker {
         // Observa novos ticks
         client.subscribe(Topic.TICK, (message) -> {
             final Tick tick = new Tick(message);
-            this.onTick(tick);
+            this.processTick(tick);
         });
 
         // Observa novos candles
         client.subscribe(Topic.RATES, (message) -> {
             try {
                 final Rate rate = new Rate(message);
-                this.onRate(rate);
+                this.processRate(rate);
             } catch (Exception ex) {
                 Logger.getLogger(MetatraderBroker.class.getName()).log(Level.SEVERE, null, ex);
             }

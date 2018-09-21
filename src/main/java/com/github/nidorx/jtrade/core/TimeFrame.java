@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade;
+package com.github.nidorx.jtrade.core;
 
 /**
  * Representação dos Timeframes padrão
@@ -50,10 +50,6 @@ public enum TimeFrame {
     private TimeFrame(int seconds) {
         this.seconds = seconds;
         this.minutes = seconds / 60;
-    }
-
-    public static TimeFrame[] all() {
-        return new TimeFrame[]{M1, M5, M15, M30, H1, H4, D1, W1, MN1};
     }
 
     public static TimeFrame ofSeconds(int seconds) {
