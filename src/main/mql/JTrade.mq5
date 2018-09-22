@@ -62,6 +62,7 @@ class NewBar {
 // --------------------------------------------------------------------
 #define TOPIC_TICK        1  // Todos os ticks
 #define TOPIC_RATES       2  // Candles (fechamento de barras)
+#define TOPIC_SERVERS     3  // Porta dos outros EA's cadastrados para a mesma conta
 
 
 /**
@@ -324,8 +325,8 @@ void acceptNewConnections() {
    };
 
    if(hasNewClient){
-      // Envia imediatamente as portas para a conexão com outros gráficos      
-      sendServersToAll();
+      // Envia imediatamente as portas com as conexões para outros gráficos      
+      publishServers();
    }
 }
 
@@ -517,33 +518,6 @@ bool createServer(ushort port){
 // --------------------------------------------------------------------
 
 
-
-/**
- * Envia a lista com as portas dos servidores para todos os clientes
- */
-void sendServersToAll() {
-   
-   string message = "SERVERS_";
-   StringAdd(message, IntegerToString(glbServerPort));
-   StringAdd(message, ",");
-      
-   for (int sz = ArraySize(glbClients), i = sz - 1; i >= 0; i--) {
-      Client client = glbClients[i];
-      if(client.type == CLIENT_TYPE_EA){
-         StringAdd(message, IntegerToString(client.port));
-         if(i < sz-1) {
-            StringAdd(message, ",");
-         }
-      }
-   }
-   StringAdd(message, CRLF);    
-
-   for (int i = ArraySize(glbClients) - 1; i >= 0; i--) {
-      glbClients[i].socket.Send(message);
-   }
-}
-
-
 /**
  * Publica o Tick atual para os interessados
  * 
@@ -587,6 +561,30 @@ void publishRate(datetime timeSeconds, double open, double hight, double low, do
 }
 
 
+/**
+ * Envia a lista com as portas dos servidores para todos os clientes
+ */
+void publishServers(){
+
+   // "SYMBOL TIME BID ASK LAST VOLUME"           
+   string content = IntegerToString(glbServerPort);
+   StringAdd(content, "_");
+      
+   for (int sz = ArraySize(glbClients), i = sz - 1; i >= 0; i--) {
+      Client client = glbClients[i];
+      if(client.type == CLIENT_TYPE_EA){
+         StringAdd(content, IntegerToString(client.port));
+         if(i < sz-1) {
+            StringAdd(content, ",");
+         }
+      }
+   }
+
+   publishOnTopic(TOPIC_SERVERS, content);
+}
+// TOPIC_SERVERS
+
+
 // --------------------------------------------------------------------
 // Comandos (RPC)
 // --------------------------------------------------------------------
@@ -600,7 +598,7 @@ void comandRegisterEA(Client& client, int requestId, int portNumber){
    client.type = CLIENT_TYPE_EA;
    client.port = portNumber;
       
-   sendServersToAll();   
+   publishServers();   
 }
 
 

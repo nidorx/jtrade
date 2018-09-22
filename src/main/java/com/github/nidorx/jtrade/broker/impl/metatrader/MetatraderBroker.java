@@ -6,11 +6,13 @@ import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.core.Rate;
-import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,38 +25,69 @@ import java.util.logging.Logger;
  */
 public class MetatraderBroker extends Broker {
 
-    private final MT5SocketClient client;
+    private final Map<String, MT5SocketClient> CLIENTS = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws IOException {
-        MetatraderBroker metatraderBroker = new MetatraderBroker("127.0.0.1", 23456);
+        MetatraderBroker metatraderBroker = new MetatraderBroker();
+        metatraderBroker.connect("127.0.0.1", 23456);
     }
 
-    public MetatraderBroker(String host, int port) throws IOException {
-        this.client = new MT5SocketClient(host, port);
+    /**
+     * Permite criar uma conexão com o EA
+     *
+     * Somente é permitido criar conexões com o EA que estejam operando a mesma
+     * conta
+     *
+     * @param host
+     * @param port
+     * @throws java.io.IOException
+     */
+    public void connect(String host, int port) throws IOException {
+        if (CLIENTS.containsKey(host + ":" + port)) {
+            return;
+        }
 
-        /**
-         * Ouve mensagens do servidor
-         */
-//        client.addObserver((Observable o, Object arg) -> {;
-//            System.out.println(arg);
-//        });
+        final MT5SocketClient client = new MT5SocketClient(host, port);
+        client.onConnect(() -> {
+
+            // Observa novos ticks
+            client.subscribe(Topic.TICK, (tick) -> {
+                this.processTick((Tick) tick);
+            });
+
+            // Observa novos candles
+            client.subscribe(Topic.RATES, (rate) -> {
+                try {
+                    this.processRate((Rate) rate);
+                } catch (Exception ex) {
+                    Logger.getLogger(MetatraderBroker.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+
+            // Sempre que um novo Server for adicionado, faz a conexão com novo server
+            client.subscribe(Topic.SERVES, (servers) -> {
+                for (Integer serverPort : (List<Integer>) servers) {
+                    if (serverPort.equals(port)) {
+                        continue;
+                    }
+                    try {
+                        connect(host, serverPort);
+                    } catch (IOException ex) {
+                        // ignora erro
+                    }
+                }
+            });
+        });
+
+        client.onDisconnect(() -> {
+            System.out.println("Desconectado");
+        });
+
+        // Finalmente, conecta-se com o server
         client.connect();
 
-        // Observa novos ticks
-        client.subscribe(Topic.TICK, (message) -> {
-            final Tick tick = new Tick(message);
-            this.processTick(tick);
-        });
-
-        // Observa novos candles
-        client.subscribe(Topic.RATES, (message) -> {
-            try {
-                final Rate rate = new Rate(message);
-                this.processRate(rate);
-            } catch (Exception ex) {
-                Logger.getLogger(MetatraderBroker.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
+        // Salva referencia para o cliente
+        CLIENTS.put(host + ":" + port, client);
     }
 
     @Override

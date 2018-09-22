@@ -2,11 +2,11 @@ package com.github.nidorx.jtrade.util;
 
 /**
  * Um parser de String Delimited
- * 
+ *
  * Usado para extração de valores de string com delimitador.
- * 
+ *
  * Ex. parser = new SDParser(string, '|');
- * 
+ *
  * @author Alex Rodin <contato@alexrodin.info>
  */
 public class SDParser {
@@ -28,24 +28,42 @@ public class SDParser {
         return this.value;
     }
 
-    public boolean popBoolean() {
+    public boolean hasMore() {
+        return this.peek() != null;
+    }
+
+    public Boolean popBoolean() {
         String result = pop();
+        if (result == null) {
+            return null;
+        }
         return Integer.parseInt(result) == 0 ? false
                 : result.length() > 1 ? Boolean.valueOf(result)
                 : true;
     }
 
-    public int popInt() {
-        return Integer.parseInt(pop());
+    public Integer popInt() {
+        String result = pop();
+        if (result == null) {
+            return null;
+        }
+        return Integer.parseInt(result);
     }
 
-    public long popLong() {
+    public Long popLong() {
         String result = pop();
+        if (result == null) {
+            return null;
+        }
         return Long.parseLong(result);
     }
 
-    public double popDouble() {
-        return Double.parseDouble(pop());
+    public Double popDouble() {
+        String result = pop();
+        if (result == null) {
+            return null;
+        }
+        return Double.parseDouble(result);
     }
 
     public String pop() {

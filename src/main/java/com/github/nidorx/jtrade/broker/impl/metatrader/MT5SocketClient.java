@@ -10,12 +10,13 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Encapsula o mecanismo de resposta asíncrona do server
@@ -47,13 +48,23 @@ class ResponseAsync {
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-public class MT5SocketClient extends Observable {
+public class MT5SocketClient {
+
+    private static final Logger LOGGER = Logger.getLogger(MT5SocketClient.class.getName());
 
     private final String host;
+
     private final int port;
+
     private Socket socket;
 
     private OutputStream outputStream;
+
+    private Runnable onConnect;
+
+    private Runnable onDisconnect;
+
+    private boolean reconnect = true;
 
     /**
      * New line
@@ -66,106 +77,113 @@ public class MT5SocketClient extends Observable {
     private static final AtomicInteger REQUEST_SEQUENCE = new AtomicInteger(0x1);
 
     /**
-     * Abriga as requisições sincronas executadas a partir do Java para o MT5 (via socket)
+     * Abriga as requisições sincronas executadas a partir do Java para o MT5
+     * (via socket)
      *
-     * O método de requisição sempre aguarda a resposta do MT5 para continuar o processamento
+     * O método de requisição sempre aguarda a resposta do MT5 para continuar o
+     * processamento
      */
     private static final Map<Integer, ResponseAsync> REQUESTS = new ConcurrentHashMap<>();
 
-    private static final Map<Topic, List<Consumer<String>>> SUBSCRIPTIONS = new ConcurrentHashMap<>();
+    private static final Map<Topic, List<Consumer<Object>>> SUBSCRIPTIONS = new ConcurrentHashMap<>();
 
     public MT5SocketClient(String host, int port) {
         this.host = host;
         this.port = port;
     }
 
-    public void connect() throws IOException {
-        socket = new Socket(host, port);
-        outputStream = socket.getOutputStream();
+    public void connect() {
+        reconnect = true;
+        try {
+            socket = new Socket(host, port);
+            outputStream = socket.getOutputStream();
+
+            if (this.onConnect != null) {
+                this.onConnect.run();
+            }
+        } catch (Exception ex) {
+            //
+        }
+
         final Thread receivingThread = new Thread() {
             @Override
             public void run() {
-                try {
-                    final BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        onMessage(line);
+                if (socket != null && !socket.isClosed()) {
+                    try {
+                        final BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            processMessage(line);
+                        }
+                    } catch (IOException ex) {
+                        // Faz nada
                     }
-                } catch (IOException ex) {
-                    notifyObservers(ex);
+                }
+
+                // Está disconectado
+                if (onDisconnect != null) {
+                    onDisconnect.run();
+                }
+
+                // Após desconectar, busca fazer nova conexão
+                while (true) {
+                    if (reconnect) {
+                        try {
+                            sleep(1000);
+                            connect();
+                            break;
+                        } catch (InterruptedException ex) {
+
+                        }
+                    } else {
+                        break;
+                    }
                 }
             }
         };
+
+        // Inicializa a captura
         receivingThread.start();
     }
 
-    /**
-     * Faz o tratamento da mensagem proveniente do EA
-     *
-     * @param message
-     */
-    private void onMessage(String message) {
-        System.out.println(message);
-        if (message.startsWith("#")) {
-            // Está respondendo a uma mensagem sincronizada, no formato "#<ID_REQUISICAO>#<CONTEUDO>"
-
-            final String[] parts = message.split("#", 3);
-            if (parts.length != 3) {
-                // Formato de mensagem inválida
-                return;
-            }
-
-            final Integer id = Integer.valueOf(parts[1]);
-            if (REQUESTS.containsKey(id)) {
-                final String content = parts[2];
-                REQUESTS.get(id).resolve(content);
-                REQUESTS.remove(id);
-            }
-        } else if (message.startsWith("\\*")) {
-            // Está respondendo a um topico, no formato "*<ID_TOPICO>*<CONTEUDO>"
-
-            final String[] parts = message.split("\\*", 3);
-            if (parts.length != 3) {
-                // Formato de mensagem inválida
-                return;
-            }
-
-            final Integer topicId = Integer.valueOf(parts[1]);
-
-            Topic topic = Topic.getByCode(topicId);
-            if (topic == null) {
-                return;
-            }
-            final String content = parts[2];
-
-            if (!SUBSCRIPTIONS.containsKey(topic)) {
-                return;
-            }
-
-            //  Informar aos interessados sobre o topico
-            SUBSCRIPTIONS.get(topic).forEach((callback) -> {
-                callback.accept(content);
-            });
-        } else {
-            notifyObservers(message);
-        }
+    public void onConnect(Runnable callback) {
+        this.onConnect = callback;
     }
 
-    @Override
-    public void notifyObservers(Object arg) {
-        super.setChanged();
-        super.notifyObservers(arg);
+    public void onDisconnect(Runnable callback) {
+        this.onDisconnect = callback;
+    }
+
+    public void disconnect() {
+        reconnect = false;
+        if (socket == null || socket.isClosed()) {
+            return;
+        }
+        try {
+            socket.close();
+        } catch (IOException ex) {
+            // faz nada
+            disconnect();
+            return;
+        }
+        socket = null;
     }
 
     /**
      * Envia uma mensagem para o EA.
      *
      * @param message
-     * @throws java.io.IOException
      */
-    public void send(String message) throws IOException {
-        outputStream.write((message + CRLF).getBytes());
-        outputStream.flush();
+    public void send(String message) {
+        if (socket == null || socket.isClosed()) {
+            return;
+        }
+        try {
+            outputStream.write((message + CRLF).getBytes());
+            outputStream.flush();
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
@@ -174,9 +192,8 @@ public class MT5SocketClient extends Observable {
      * @param topic
      * @param callback
      * @return
-     * @throws IOException
      */
-    public Cancelable subscribe(final Topic topic, final Consumer<String> callback) throws IOException {
+    public Cancelable subscribe(final Topic topic, final Consumer<Object> callback) {
 
         this.send("TOPIC_" + topic.code + "_1");
 
@@ -189,6 +206,9 @@ public class MT5SocketClient extends Observable {
         }
 
         return () -> {
+            // Unsubscribe topic
+            this.send("TOPIC_" + topic.code + "_0");
+
             if (!SUBSCRIPTIONS.containsKey(topic)) {
                 return;
             }
@@ -238,7 +258,7 @@ public class MT5SocketClient extends Observable {
 
             // Aguarda a resposta do EA para continuar a execução
             response.await();
-        } catch (IOException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
 
             // Limpa a referencia
             REQUESTS.remove(id);
@@ -266,13 +286,59 @@ public class MT5SocketClient extends Observable {
     }
 
     /**
-     * Close the socket
+     * Faz o tratamento da mensagem proveniente do EA
+     *
+     * @param message
      */
-    public void close() {
-        try {
-            socket.close();
-        } catch (IOException ex) {
-            notifyObservers(ex);
+    private void processMessage(String message) {
+        System.out.println(message);
+        if (message.startsWith("#")) {
+            // Está respondendo a uma mensagem sincronizada, no formato "#<ID_REQUISICAO>#<CONTEUDO>"
+
+            final String[] parts = message.split("#", 3);
+            if (parts.length != 3) {
+                // Formato de mensagem inválida
+                return;
+            }
+
+            final Integer id = Integer.valueOf(parts[1]);
+            if (REQUESTS.containsKey(id)) {
+                final String content = parts[2];
+                REQUESTS.get(id).resolve(content);
+                REQUESTS.remove(id);
+            }
+        } else if (message.startsWith("\\*")) {
+            // Está respondendo a um topico, no formato "*<ID_TOPICO>*<CONTEUDO>"
+
+            final String[] parts = message.split("\\*", 3);
+            if (parts.length != 3) {
+                // Formato de mensagem inválida
+                return;
+            }
+
+            final Integer topicId = Integer.valueOf(parts[1]);
+
+            final Topic topic = Topic.getByCode(topicId);
+            if (topic == null) {
+                // Mensagem inválida, não exste este tópico
+                return;
+            }
+            final String content = parts[2];
+
+            if (!SUBSCRIPTIONS.containsKey(topic)) {
+                // Unsubscribe topic
+                this.send("TOPIC_" + topic.code + "_0");
+
+                return;
+            }
+
+            //  Informar aos interessados sobre o topico
+            SUBSCRIPTIONS.get(topic).forEach((callback) -> {
+                callback.accept(topic.decode(content));
+            });
+        } else {
+            System.out.println(message);
         }
     }
+
 }
