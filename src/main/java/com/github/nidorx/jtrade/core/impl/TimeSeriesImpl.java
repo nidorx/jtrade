@@ -15,7 +15,7 @@ public final class TimeSeriesImpl extends TimeSeriesGeneric<Rate> implements Tim
 
     @Override
     protected Instant extract(Rate item) {
-        return Instant.ofEpochMilli(item.time);
+        return item.time;
     }
 
     @Override

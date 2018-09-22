@@ -12,6 +12,30 @@
 input ushort   ServerPort = 23456;  // Server port
 
 
+//+------------------------------------------------------------------+
+//|                                                Lib CisNewBar.mqh |
+//|                                            Copyright 2010, Lizar |
+//|                                               Lizar-2010@mail.ru |
+//|                                              Revision 2010.09.27 |
+//|                             https://www.mql5.com/en/articles/159 |
+//+------------------------------------------------------------------+
+class NewBar {
+   protected:
+      datetime          m_lastbar_time;   // Time of opening last bar
+      ENUM_TIMEFRAMES   m_period;         // Chart period
+      uint              m_retcode;        // Result code of detecting new bar 
+      int               m_new_bars;       // Number of new bars
+      
+   public:
+      void              NewBar( ENUM_TIMEFRAMES period );     
+      int               countNewBar();
+      bool              isNewBar(datetime new_Time);
+      uint              getRetCode() const { return m_retcode; }
+      datetime          getLastBarTime() const { return m_lastbar_time; }
+      int               getNewBars() const { return m_new_bars; }
+};
+
+
 // --------------------------------------------------------------------
 // Global variables and constants
 // --------------------------------------------------------------------
@@ -44,6 +68,21 @@ input ushort   ServerPort = 23456;  // Server port
  * Representa o tipo de cliente conectado
  */
 enum ClientType { CLIENT_TYPE_EA, CLIENT_TYPE_CLIENT, CLIENT_TYPE_UNDEFINED };
+
+/**
+ * Os períodos observados por este EA
+ */
+ENUM_TIMEFRAMES TIMEFRAMES[] = {
+   PERIOD_M1,
+   PERIOD_M5,
+   PERIOD_M15,
+   PERIOD_M30,
+   PERIOD_H1,
+   PERIOD_H4,
+   PERIOD_D1,
+   PERIOD_W1,
+   PERIOD_MN1
+};
 
 /**
  * Representa uma conexão cliente
@@ -103,6 +142,8 @@ int glbServers[];
  */
 bool glbCreatedTimer = false;
 
+NewBar *bars[ArraySize(TIMEFRAMES)];
+
 
 /**
  * Inicialização
@@ -110,6 +151,10 @@ bool glbCreatedTimer = false;
  * 1 - Verifi
  */
 void OnInit() {
+
+   for(int i = ArraySize(TIMEFRAMES) - 1; i >= 0; i--) {
+      bars[i] = new NewBar(TIMEFRAMES[i]);
+   }      
    
    // Verifica se já existe um MASTER
    glbClientSocket = new ClientSocket("127.0.0.1", ServerPort);
@@ -124,6 +169,8 @@ void OnInit() {
       }      
    }
 }
+
+
 
 
 /**
@@ -161,12 +208,30 @@ void OnDeinit(const int reason) {
 void OnTick() {
    if (!glbCreatedTimer) glbCreatedTimer = EventSetMillisecondTimer(TIMER_FREQUENCY_MS);
 
-   MqlTick tick;
+   MqlTick tick;   
+   MqlRates rate;
+   MqlRates rates[];   
+   int countNewBars;
+   
    if(SymbolInfoTick(Symbol(), tick)) {
-            
+      
+      // Envia tick            
       publishTick(tick.time_msc, tick.bid, tick.ask, tick.last, tick.volume);
 
-      // @TODO: Verificar por fechamento de candles
+      // Verificar por fechamento de candles
+      for(int i = ArraySize(TIMEFRAMES) - 1; i >= 0; i--) {
+         countNewBars = bars[i].countNewBar();         
+         if(countNewBars > 0){        
+            ArraySetAsSeries(rates, true); 
+            int copied = CopyRates(Symbol(), TIMEFRAMES[i], 0, countNewBars, rates); 
+            if ( copied > 0 ){
+               for(int j = 0; j < copied; j++){
+                  rate = rates[j];
+                  publishRate(rate.time, rate.open, rate.high, rate.low, rate.close, rate.tick_volume, rate.real_volume, rate.spread, PeriodSeconds(TIMEFRAMES[i]));
+              }               
+           } 
+         }
+      }      
    } 
 }
 
@@ -487,11 +552,11 @@ void sendServersToAll() {
  * @param volume  Volume for the current Last price 
  * @param isBuy 1: a tick is a result of a buy deal, -1: a tick is a result of a sell deal, 0: otherwise
  */
-void publishTick(long timems, double bid, double ask, double last, ulong volume){
+void publishTick(long timeMilis, double bid, double ask, double last, ulong volume){
 
    // "SYMBOL TIME BID ASK LAST VOLUME"
    string content = Symbol()
-         + " " + timems
+         + " " + timeMilis
          + " " + DoubleToString(bid) 
          + " " + DoubleToString(ask) 
          + " " + DoubleToString(last) 
@@ -504,11 +569,11 @@ void publishTick(long timems, double bid, double ask, double last, ulong volume)
 /**
  * Publica o fechamento de candles para o timeframe informado
  */
-void publishRate(long timems, double open, double hight, double low, double close, ulong volumeTick, ulong volumeReal, double spread, int timeframe){
+void publishRate(datetime timeSeconds, double open, double hight, double low, double close, ulong volumeTick, ulong volumeReal, double spread, int timeframe){
 
    // "SYMBOL TIME OPEN HIGH LOW CLOSE TICK_VOLUME REAL_VOLUME SPREAD INTERVAL"
    string content = Symbol()
-         + " " + timems
+         + " " + timeSeconds
          + " " + DoubleToString(open) 
          + " " + DoubleToString(hight) 
          + " " + DoubleToString(low) 
@@ -586,31 +651,8 @@ void commandSendResponse(Client& client, int requestId, int error, string conten
 }
 
 
-//+------------------------------------------------------------------+
-//|                                                Lib CisNewBar.mqh |
-//|                                            Copyright 2010, Lizar |
-//|                                               Lizar-2010@mail.ru |
-//|                                              Revision 2010.09.27 |
-//|                             https://www.mql5.com/en/articles/159 |
-//+------------------------------------------------------------------+
 
-class NewBar {
-   protected:
-      datetime          m_lastbar_time;   // Time of opening last bar
-      ENUM_TIMEFRAMES   m_period;         // Chart period
-      uint              m_retcode;        // Result code of detecting new bar 
-      int               m_new_bars;       // Number of new bars
-      
-   public:
-      void              NewBar( ENUM_TIMEFRAMES period );     
-      int               countNewBar();
-      bool              isNewBar(datetime new_Time);
-      uint              getRetCode() const { return m_retcode; }
-      datetime          getLastBarTime() const { return m_lastbar_time; }
-      int               getNewBars() const { return m_new_bars; }
-};
-
-void NewBar::NewBar(ENUM_TIMEFRAMES period) {
+void NewBar::NewBar( ENUM_TIMEFRAMES period ) {
    m_retcode = 0; 
    m_new_bars = 0;
    m_lastbar_time = 0;
@@ -623,6 +665,11 @@ void NewBar::NewBar(ENUM_TIMEFRAMES period) {
  * @return Number of new bars
  */
 int NewBar::countNewBar() {
+
+   //int period_seconds = PeriodSeconds(m_period);                           // Number of seconds in current chart period
+   //datetime new_time = TimeCurrent() / period_seconds * period_seconds;    // Time of bar opening on current chart
+   //if(isNewBar(new_time)) 
+
    datetime newbar_time;
    datetime lastbar_time = m_lastbar_time;
       
@@ -693,6 +740,3 @@ bool NewBar::isNewBar(datetime newbar_time) {
    // if we've reached this line, then the bar is not new; return false
    return false;
 }
-
-
-  

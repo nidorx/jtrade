@@ -1,6 +1,7 @@
 package com.github.nidorx.jtrade.core;
 
 import com.github.nidorx.jtrade.util.SDParser;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ public class Rate {
 
     public final String symbol;
 
-    public final long time;
+    public final Instant time;
 
     public final double open;
 
@@ -38,16 +39,16 @@ public class Rate {
     public final Map<String, Object> meta = new HashMap<>();
 
     /**
-     * No formato "SYMBOL TIME OPEN HIGH LOW CLOSE TICK_VOLUME REAL_VOLUME SPREAD INTERVAL"
+     * No formato "SYMBOL TIME_SECONDS OPEN HIGH LOW CLOSE TICK_VOLUME REAL_VOLUME SPREAD INTERVAL"
      *
-     * Ex. "EURUSD 1537429422098 1.88823000 1.88835000 1.00000000 2.00000000 0 0 0 86400"
+     * Ex. "EURUSD 1514854620 1.20133000 1.20133000 1.20133000 1.20133000 1 0 30.00000000 60"
      *
      * @param data
      */
     public Rate(String data) {
         SDParser p = new SDParser(data, ' ');
         this.symbol = p.pop();
-        this.time = p.popLong();
+        this.time = Instant.ofEpochSecond(p.popLong());
         this.open = p.popDouble();
         this.high = p.popDouble();
         this.low = p.popDouble();
@@ -58,7 +59,7 @@ public class Rate {
         this.timeframe = TimeFrame.ofSeconds(p.popInt());
     }
 
-    public Rate(String symbol, long time, double open, double high, double low, double close, long volumeTick, long volumeReal, int spread, TimeFrame timeframe) {
+    public Rate(String symbol, Instant time, double open, double high, double low, double close, long volumeTick, long volumeReal, int spread, TimeFrame timeframe) {
         this.symbol = symbol;
         this.time = time;
         this.open = open;
@@ -73,7 +74,7 @@ public class Rate {
 
     @Override
     public String toString() {
-        return "" + this.time + " " + this.symbol + " OHLC=" + this.open + " " + this.high + " " + this.low + " " + this.close;
+        return " " + time + " " + symbol + " OHLC=" + open + " " + high + " " + low + " " + close;
     }
 
 }
