@@ -1,5 +1,6 @@
 package com.github.nidorx.jtrade.broker;
 
+import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.core.impl.InstrumentImpl;
 import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
@@ -34,6 +35,8 @@ public abstract class Broker {
      */
     private Instant serverTime = Instant.EPOCH;
 
+    private Account account;
+
     /**
      * A lista de instrumentos deste Broker
      */
@@ -50,23 +53,6 @@ public abstract class Broker {
      * @return
      */
     public abstract String getName();
-
-    /**
-     * Obtém as informações atualizadas da conta
-     *
-     * @return
-     * @throws java.lang.Exception
-     */
-    public abstract Account getAccount() throws Exception;
-
-    /**
-     * Obtém as informações atualizadas da conta para um instrumento
-     *
-     * @param symbol
-     * @return
-     * @throws java.lang.Exception
-     */
-    public abstract Account getAccountSummary(String symbol) throws Exception;
 
     /**
      * Obtém a posição aberta (se disponível) para o simbolo informado
@@ -246,6 +232,15 @@ public abstract class Broker {
     }
 
     /**
+     * Obtém as informações atualizadas da conta
+     *
+     * @return
+     */
+    public final Account getAccount() {
+        return account;
+    }
+
+    /**
      * Obtém a última hora conhecida do servidor.
      *
      * @return
@@ -340,6 +335,34 @@ public abstract class Broker {
     }
 
     /**
+     * Permite definir os detalhes da conta atual
+     *
+     * @param account
+     */
+    protected final void setAccount(Account account) {
+        if (account.time.isBefore(getServerTime())) {
+            // Informação defazada sobre o status da conta
+            return;
+        }
+
+        if (account.time.isAfter(getServerTime())) {
+            // Atualiza o server time, se necessário
+            setServerTime(account.time);
+        }
+
+        this.account = account;
+    }
+
+    /**
+     * Define última hora conhecida do servidor.
+     *
+     * @param instant
+     */
+    protected final void setServerTime(Instant instant) {
+        serverTime = instant;
+    }
+
+    /**
      * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
      *
      * @param tick
@@ -400,7 +423,7 @@ public abstract class Broker {
      * @param quote
      * @throws Exception
      */
-    protected final void createInstrument(String symbol, Currency base, Currency quote) throws Exception {
+    protected final void createInstrument(String symbol, String base, String quote) throws Exception {
         final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
         if (instrument != null) {
             throw new Exception("A instrument is already registered for the symbol:" + symbol);
@@ -419,12 +442,20 @@ public abstract class Broker {
      * @param tickValue
      * @throws Exception
      */
-    protected final void createInstrument(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) throws Exception {
+    protected final void createInstrument(String symbol, String base, String quote, int digits, double contractSize, double tickValue) throws Exception {
         final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
         if (instrument != null) {
             throw new Exception("A instrument is already registered for the symbol:" + symbol);
         }
         instruments.put(symbol, new InstrumentImpl(symbol, base, quote, digits, contractSize, tickValue));
+    }
+
+    protected final void createInstrument(String symbol, String base, String quote, int digits, double contractSize, double tickValue, double bid, double ask) throws Exception {
+        final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
+        if (instrument != null) {
+            throw new Exception("A instrument is already registered for the symbol:" + symbol);
+        }
+        instruments.put(symbol, new InstrumentImpl(symbol, base, quote, digits, contractSize, tickValue, bid, ask));
     }
 
     /**
@@ -563,21 +594,21 @@ public abstract class Broker {
      * @return
      * @throws java.lang.Exception
      */
-    public final double exchangeRate(Currency base, Currency quoted) throws Exception {
-        Currency accCurrency = getAccount().getCurrency();
+    public final double exchangeRate(String base, String quoted) throws Exception {
+        String accCurrency = getAccount().currency;
 
         if (accCurrency.equals(base)) {
             // Ex. acc=USD, base = USD, quoted = JPY (USDJPY)
-            return getInstrument(base.getCurrencyCode() + quoted.getCurrencyCode()).bid();
+            return getInstrument(base + quoted).bid();
         } else if (accCurrency.equals(quoted)) {
             // Ex. acc=USD, base = EUR, quoted = USD (EURUSD)
             return 1;
         } else {
-            Instrument instrument = getInstrument(accCurrency.getCurrencyCode() + quoted.getCurrencyCode());
+            Instrument instrument = getInstrument(accCurrency + quoted);
             if (instrument != null) {
                 return instrument.bid();
             }
-            instrument = getInstrument(quoted.getCurrencyCode() + accCurrency.getCurrencyCode());
+            instrument = getInstrument(quoted + accCurrency);
             if (instrument != null) {
                 return 1 / instrument.bid();
             }
@@ -586,7 +617,7 @@ public abstract class Broker {
         return 1;
     }
 
-    public final double exchange(double value, Currency from, Currency to) throws Exception {
+    public final double exchange(double value, String from, String to) throws Exception {
         return value * exchangeRate(from, to);
     }
 

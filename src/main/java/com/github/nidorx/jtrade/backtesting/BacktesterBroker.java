@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.backtesting;
 
-import com.github.nidorx.jtrade.broker.Account;
+import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.broker.Broker;
 import java.time.Instant;
 

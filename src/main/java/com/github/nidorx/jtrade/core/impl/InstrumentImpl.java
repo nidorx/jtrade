@@ -32,13 +32,20 @@ public final class InstrumentImpl extends Instrument {
 
     private double ask = 0D;
 
-    public InstrumentImpl(String symbol, Currency base, Currency quote) {
+    public InstrumentImpl(String symbol, String base, String quote) {
         super(symbol, base, quote);
         initTimeseries();
     }
 
-    public InstrumentImpl(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) {
+    public InstrumentImpl(String symbol, String base, String quote, int digits, double contractSize, double tickValue) {
         super(symbol, base, quote, digits, contractSize, tickValue);
+        initTimeseries();
+    }
+
+    public InstrumentImpl(String symbol, String base, String quote, int digits, double contractSize, double tickValue, double bid, double ask) {
+        super(symbol, base, quote, digits, contractSize, tickValue);
+        this.bid = bid;
+        this.ask = ask;
         initTimeseries();
     }
 

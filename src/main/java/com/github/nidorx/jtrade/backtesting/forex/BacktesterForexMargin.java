@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.backtesting.forex;
 
-import com.github.nidorx.jtrade.broker.Account;
+import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.OrderType;
@@ -77,7 +77,8 @@ public class BacktesterForexMargin {
     public double calculate(Instrument instument, Account account, double volume, OrderType type) throws Exception {
         double margin = 0.0;
 
-        final Position position = account.getPosition(instument);
+//        final Position position = account.getPosition(instument);;
+        final Position position = null;
 
         // If the account has an open position
         if (position != null) {
@@ -170,10 +171,10 @@ public class BacktesterForexMargin {
             // Fixed Margin
             // If "Initial margin" parameter value is set in the symbol specification, this value is used. 
             // Volume in lots * Initial margin / Leverage
-            margin = volume * getInitialMargin() / account.getLeverage();
+            margin = volume * getInitialMargin() / account.leverage;
         } else {
             // Volume in lots * Contract size / Leverage
-            margin = volume * instument.contractSize / account.getLeverage();
+            margin = volume * instument.contractSize / account.leverage;
         }
 
         return margin;

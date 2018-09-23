@@ -1,5 +1,6 @@
 package com.github.nidorx.jtrade.broker.impl.metatrader.model;
 
+import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.core.Tick;
 import com.github.nidorx.jtrade.util.SDParser;
@@ -23,13 +24,19 @@ public enum Topic {
     /**
      * Tópico com informação sobre todos os servers da mesma conta para o EA
      */
-    SERVES(3, (String message) -> {
+    SERVERS(3, (String message) -> {
         final List<Integer> servers = new ArrayList<>();
         SDParser p = new SDParser(message, '_');
         while (p.hasMore()) {
             servers.add(p.popInt());
         }
         return servers;
+    }),
+    /**
+     * Informações sobre a atualização da conta
+     */
+    ACCOUNT(4, (String message) -> {
+        return new Account(message);
     });
 
     public static Topic getByCode(int code) {

@@ -7,7 +7,10 @@ package com.github.nidorx.jtrade.broker.impl.metatrader.model;
  */
 public enum Command {
 
-    XPTO("xpto", 1);
+    SYMBOL("Symbol", 2),
+    ACCOUNT("Account", 3)
+    ;
+    
 
     public final String name;
 

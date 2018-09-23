@@ -1,7 +1,6 @@
 package com.github.nidorx.jtrade.core;
 
 import com.github.nidorx.jtrade.util.Cancelable;
-import com.github.nidorx.jtrade.broker.Account;
 import com.github.nidorx.jtrade.broker.Broker;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;

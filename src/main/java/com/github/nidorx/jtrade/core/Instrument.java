@@ -32,7 +32,7 @@ public abstract class Instrument {
      *
      * ex. FOREX STANDARD = 100.000
      */
-    public final int contractSize;
+    public final double contractSize;
 
     /**
      * PIP - Passo de mudança de preço mínimo.
@@ -51,25 +51,25 @@ public abstract class Instrument {
     /**
      * Moeda em que os requisitos de margem são calculados.
      */
-    public final Currency base;
+    public final String base;
 
     /**
      * Moeda na qual o lucro do comércio de símbolos é calculado.
      */
-    public final Currency quote;
+    public final String quote;
 
-    public Instrument(String symbol, Currency base, Currency quote) {
-        this(symbol, base, quote, 4, 100000, 0.0);
+    public Instrument(String symbol, String base, String quote) {
+        this(symbol, base, quote, 4, 100000D, 0.0);
     }
 
-    public Instrument(String symbol, Currency base, Currency quote, int digits, int contractSize, double tickValue) {
+    public Instrument(String symbol, String base, String quote, int digits, double contractSize, double tickValue) {
         this.symbol = symbol;
         this.digits = digits;
         this.contractSize = contractSize;
-        this.tickSize = 1 / Math.pow(10, digits);
         this.tickValue = tickValue;
         this.base = base;
         this.quote = quote;
+        this.tickSize = 1 / Math.pow(10, digits);
     }
 
     public abstract double bid();

@@ -77,11 +77,9 @@ public class MT5SocketClient {
     private static final AtomicInteger REQUEST_SEQUENCE = new AtomicInteger(0x1);
 
     /**
-     * Abriga as requisições sincronas executadas a partir do Java para o MT5
-     * (via socket)
+     * Abriga as requisições sincronas executadas a partir do Java para o MT5 (via socket)
      *
-     * O método de requisição sempre aguarda a resposta do MT5 para continuar o
-     * processamento
+     * O método de requisição sempre aguarda a resposta do MT5 para continuar o processamento
      */
     private static final Map<Integer, ResponseAsync> REQUESTS = new ConcurrentHashMap<>();
 
@@ -98,9 +96,6 @@ public class MT5SocketClient {
             socket = new Socket(host, port);
             outputStream = socket.getOutputStream();
 
-            if (this.onConnect != null) {
-                this.onConnect.run();
-            }
         } catch (Exception ex) {
             //
         }
@@ -144,6 +139,12 @@ public class MT5SocketClient {
 
         // Inicializa a captura
         receivingThread.start();
+
+        if (socket != null && !socket.isClosed()) {
+            if (this.onConnect != null) {
+                this.onConnect.run();
+            }
+        }
     }
 
     public void onConnect(Runnable callback) {

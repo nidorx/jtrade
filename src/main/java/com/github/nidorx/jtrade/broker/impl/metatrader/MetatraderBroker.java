@@ -2,14 +2,18 @@ package com.github.nidorx.jtrade.broker.impl.metatrader;
 
 import com.github.nidorx.jtrade.broker.impl.metatrader.model.Topic;
 import com.github.nidorx.jtrade.core.Tick;
-import com.github.nidorx.jtrade.broker.Account;
+import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
+import com.github.nidorx.jtrade.broker.impl.metatrader.model.Command;
 import com.github.nidorx.jtrade.broker.trading.Order;
 import com.github.nidorx.jtrade.broker.trading.Position;
+import com.github.nidorx.jtrade.util.SDParser;
 import java.io.IOException;
+import java.time.Instant;
+import java.util.Currency;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +29,8 @@ import java.util.logging.Logger;
  */
 public class MetatraderBroker extends Broker {
 
+    private static final Logger LOGGER = Logger.getLogger(MetatraderBroker.class.getName());
+
     private final Map<String, MT5SocketClient> CLIENTS = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws IOException {
@@ -35,8 +41,7 @@ public class MetatraderBroker extends Broker {
     /**
      * Permite criar uma conexão com o EA
      *
-     * Somente é permitido criar conexões com o EA que estejam operando a mesma
-     * conta
+     * Somente é permitido criar conexões com o EA que estejam operando a mesma conta
      *
      * @param host
      * @param port
@@ -50,6 +55,37 @@ public class MetatraderBroker extends Broker {
         final MT5SocketClient client = new MT5SocketClient(host, port);
         client.onConnect(() -> {
 
+            // Obtém informação sobre o instrumento
+            while (true) {
+                try {
+                    // "SYMBOL BASE QUOTE DIGITS CONTRACT_SIZE TICK_VALUE TIME BID ASK"
+                    String response = client.exec(Command.SYMBOL);
+                    SDParser p = new SDParser(response, ' ');
+
+                    String symbol = p.pop();
+                    String base = p.pop();
+                    String quote = p.pop();
+                    int digits = p.popInt();
+                    double contractSize = p.popDouble();
+                    double tickValue = p.popDouble();
+                    long time = p.popLong();
+                    double bid = p.popDouble();
+                    double ask = p.popDouble();
+
+                    createInstrument(symbol, base, quote, digits, contractSize, tickValue, bid, ask);
+
+                    setServerTime(Instant.ofEpochSecond(time));
+                    break;
+                } catch (Exception ex) {
+                    LOGGER.log(Level.SEVERE, null, ex);
+                }
+            }
+
+            // Observa informações sobre a conta
+            client.subscribe(Topic.ACCOUNT, (account) -> {
+                this.setAccount((Account) account);
+            });
+
             // Observa novos ticks
             client.subscribe(Topic.TICK, (tick) -> {
                 this.processTick((Tick) tick);
@@ -60,12 +96,12 @@ public class MetatraderBroker extends Broker {
                 try {
                     this.processRate((Rate) rate);
                 } catch (Exception ex) {
-                    Logger.getLogger(MetatraderBroker.class.getName()).log(Level.SEVERE, null, ex);
+                    LOGGER.log(Level.SEVERE, null, ex);
                 }
             });
 
             // Sempre que um novo Server for adicionado, faz a conexão com novo server
-            client.subscribe(Topic.SERVES, (servers) -> {
+            client.subscribe(Topic.SERVERS, (servers) -> {
                 for (Integer serverPort : (List<Integer>) servers) {
                     if (serverPort.equals(port)) {
                         continue;
@@ -73,7 +109,7 @@ public class MetatraderBroker extends Broker {
                     try {
                         connect(host, serverPort);
                     } catch (IOException ex) {
-                        // ignora erro
+                        LOGGER.log(Level.SEVERE, null, ex);
                     }
                 }
             });
@@ -93,16 +129,6 @@ public class MetatraderBroker extends Broker {
     @Override
     public String getName() {
         return "Metatrader";
-    }
-
-    @Override
-    public Account getAccount() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Account getAccountSummary(String symbol) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
