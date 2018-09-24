@@ -74,7 +74,7 @@ public class Rate {
 
     @Override
     public String toString() {
-        return " " + time + " " + symbol + " OHLC=" + open + " " + high + " " + low + " " + close;
+        return " " + time + " " + symbol + " " + timeframe + " " + " OHLC=" + open + " " + high + " " + low + " " + close;
     }
 
 }

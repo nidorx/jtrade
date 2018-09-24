@@ -1,7 +1,6 @@
 package com.github.nidorx.jtrade.core;
 
 import java.time.Instant;
-import java.util.Currency;
 import java.util.List;
 
 /**
@@ -19,6 +18,16 @@ public abstract class Instrument {
      * ex. EURUSD, USDJPY
      */
     public final String symbol;
+
+    /**
+     * Moeda em que os requisitos de margem são calculados.
+     */
+    public final String base;
+
+    /**
+     * Moeda na qual o lucro do comércio de símbolos é calculado.
+     */
+    public final String quote;
 
     /**
      * Número de casas decimais no preço do símbolo.
@@ -48,16 +57,6 @@ public abstract class Instrument {
      */
     public final double tickValue;
 
-    /**
-     * Moeda em que os requisitos de margem são calculados.
-     */
-    public final String base;
-
-    /**
-     * Moeda na qual o lucro do comércio de símbolos é calculado.
-     */
-    public final String quote;
-
     public Instrument(String symbol, String base, String quote) {
         this(symbol, base, quote, 4, 100000D, 0.0);
     }
@@ -75,6 +74,27 @@ public abstract class Instrument {
     public abstract double bid();
 
     public abstract double ask();
+
+    /**
+     * Minimal permissible StopLoss/TakeProfit value in points.
+     *
+     * channel of prices (in points) from the current price, inside which one can't place Stop Loss, Take Profit and
+     * pending orders. When placing an order inside the channel, the server will return message "Invalid Stops" and will
+     * not accept the order.
+     *
+     * @return
+     */
+    public abstract int stopLevel();
+
+    /**
+     * Order freeze level in points.
+     *
+     * If the execution price lies within the range defined by the freeze level, the order cannot be modified, canceled
+     * or closed.
+     *
+     * @return
+     */
+    public abstract int freezeLevel();
 
     /**
      * Obtém um TimeSeries para o instrumento atual no timeframe informado
@@ -110,14 +130,6 @@ public abstract class Instrument {
 
     public double spread() {
         return ask() - bid();
-    }
-
-    public double stopLevel() {
-        return 0;
-    }
-
-    public double freezeLevel() {
-        return 0;
     }
 
     /**

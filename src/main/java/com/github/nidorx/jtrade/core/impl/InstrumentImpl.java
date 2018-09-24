@@ -7,7 +7,6 @@ import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.core.TimeSeries;
 import com.github.nidorx.jtrade.util.TimeSeriesGeneric;
 import java.time.Instant;
-import java.util.Currency;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +31,10 @@ public final class InstrumentImpl extends Instrument {
 
     private double ask = 0D;
 
+    private int stopLevel = 0;
+
+    private int freezeLevel = 0;
+
     public InstrumentImpl(String symbol, String base, String quote) {
         super(symbol, base, quote);
         initTimeseries();
@@ -42,7 +45,8 @@ public final class InstrumentImpl extends Instrument {
         initTimeseries();
     }
 
-    public InstrumentImpl(String symbol, String base, String quote, int digits, double contractSize, double tickValue, double bid, double ask) {
+    public InstrumentImpl(String symbol, String base, String quote, int digits, double contractSize, double tickValue,
+            double bid, double ask) {
         super(symbol, base, quote, digits, contractSize, tickValue);
         this.bid = bid;
         this.ask = ask;
@@ -57,6 +61,24 @@ public final class InstrumentImpl extends Instrument {
     @Override
     public double ask() {
         return ask;
+    }
+
+    @Override
+    public int stopLevel() {
+        return stopLevel;
+    }
+
+    @Override
+    public int freezeLevel() {
+        return freezeLevel;
+    }
+
+    public void setStopLevel(int stopLevel) {
+        this.stopLevel = stopLevel;
+    }
+
+    public void setFreezeLevel(int freezeLevel) {
+        this.freezeLevel = freezeLevel;
     }
 
     @Override

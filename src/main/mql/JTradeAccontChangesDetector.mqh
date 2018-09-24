@@ -5,7 +5,7 @@
  */
 class AccontChangesDetector {
    protected:
-      int       leverage;
+      long      leverage;
       double    balance;
       double    equity;
       double    margin;
@@ -38,7 +38,7 @@ bool AccontChangesDetector::hasChange() {
    }
 
    lastcheck = TimeCurrent();
-   int n_leverage       = AccountInfoInteger(ACCOUNT_LEVERAGE);
+   long n_leverage      = AccountInfoInteger(ACCOUNT_LEVERAGE);
    double n_balance     = AccountInfoDouble(ACCOUNT_BALANCE);
    double n_equity      = AccountInfoDouble(ACCOUNT_EQUITY);
    double n_margin      = AccountInfoDouble(ACCOUNT_MARGIN);

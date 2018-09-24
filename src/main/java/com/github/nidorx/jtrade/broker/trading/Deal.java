@@ -1,9 +1,6 @@
 package com.github.nidorx.jtrade.broker.trading;
 
 import java.time.Instant;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
 
 /**
  * Transação – fato da compra ou venda de um instrumento financeiro.
@@ -19,59 +16,69 @@ import lombok.Data;
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-@Data
-@Builder
-@AllArgsConstructor
 public class Deal {
 
     /**
      * O identificador dessa transação. Um número exclusivo atribuído a cada transação.
      */
-    private final Long id;
+    public final Long id;
 
     /**
      * O identificador da ordem que gerou essa transação
      */
-    private final Long order;
+    public final Long order;
 
     /**
      * O instante da execução da transação
      */
-    private final Instant time;
+    public final Instant time;
 
     /**
      * O tipo de transação. Cada transação é caracterizada por um tipo,
      */
-    private final DealType type;
+    public final DealType type;
 
     /**
      * As transações (deal) diferem entre si não somente no seu conjunto de tipos em {@link DealType}, mas também na
      * forma como elas alteram posições.
      */
-    private final DealEntry entry;
+    public final DealEntry entry;
 
     /**
      * Preço da transação
      */
-    private final double price;
+    public final double price;
 
     /**
      * Volume da transação
      */
-    private final double volume;
+    public final double volume;
 
     /**
      * Comissão da transação
      */
-    private final double commission;
+    public final double commission;
 
     /**
      * Swap acumulativo no fechamento
      */
-    private final double swap;
+    public final double swap;
 
     /**
      * Lucro da transação
      */
-    private final double profit;
+    public final double profit;
+
+    public Deal(Long id, Long order, Instant time, DealType type, DealEntry entry, double price, double volume, double commission, double swap, double profit) {
+        this.id = id;
+        this.order = order;
+        this.time = time;
+        this.type = type;
+        this.entry = entry;
+        this.price = price;
+        this.volume = volume;
+        this.commission = commission;
+        this.swap = swap;
+        this.profit = profit;
+    }
 }

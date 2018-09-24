@@ -7,13 +7,19 @@ import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
+import com.github.nidorx.jtrade.broker.exception.TradeExceptionReason;
 import com.github.nidorx.jtrade.broker.impl.metatrader.model.Command;
 import com.github.nidorx.jtrade.broker.trading.Order;
+import com.github.nidorx.jtrade.broker.trading.OrderFilling;
+import com.github.nidorx.jtrade.broker.trading.OrderState;
+import com.github.nidorx.jtrade.broker.trading.OrderType;
 import com.github.nidorx.jtrade.broker.trading.Position;
+import com.github.nidorx.jtrade.core.Strategy;
+import com.github.nidorx.jtrade.core.TimeFrame;
+import com.github.nidorx.jtrade.core.impl.InstrumentImpl;
 import com.github.nidorx.jtrade.util.SDParser;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Currency;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,9 +39,42 @@ public class MetatraderBroker extends Broker {
 
     private final Map<String, MT5SocketClient> CLIENTS = new ConcurrentHashMap<>();
 
-    public static void main(String[] args) throws IOException {
-        MetatraderBroker metatraderBroker = new MetatraderBroker();
-        metatraderBroker.connect("127.0.0.1", 23456);
+    private final Map<Instrument, MT5SocketClient> CLIENTS_BY_INSTRUMENT = new ConcurrentHashMap<>();
+
+    public static void main(String[] args) throws IOException, Exception {
+        MetatraderBroker broker = new MetatraderBroker();
+        broker.connect("127.0.0.1", 23456);
+
+        broker.register(new Strategy() {
+            @Override
+            public String getName() {
+                return "TesteMT5";
+            }
+
+            @Override
+            public void initialize(Account account) {
+
+            }
+
+            @Override
+            public void onTick(Tick tick) {
+//                System.out.println(tick);
+            }
+
+            @Override
+            public void onRate(Rate rate) {
+                if (rate.timeframe.equals(TimeFrame.M30)) {
+                    // @TODO: Testar buy e verificar posições abertas
+                    System.out.println(rate);
+                }
+                // 1514859960
+            }
+
+            @Override
+            protected void onRelease() {
+
+            }
+        }, "EURUSD");
     }
 
     /**
@@ -58,7 +97,7 @@ public class MetatraderBroker extends Broker {
             // Obtém informação sobre o instrumento
             while (true) {
                 try {
-                    // "SYMBOL BASE QUOTE DIGITS CONTRACT_SIZE TICK_VALUE TIME BID ASK"
+                    // "SYMBOL BASE QUOTE DIGITS CONTRACT_SIZE TICK_VALUE TIME BID ASK STOPS_LEVEL FREEZE_LEVEL"
                     String response = client.exec(Command.SYMBOL);
                     SDParser p = new SDParser(response, ' ');
 
@@ -71,8 +110,17 @@ public class MetatraderBroker extends Broker {
                     long time = p.popLong();
                     double bid = p.popDouble();
                     double ask = p.popDouble();
+                    int stopLevel = p.popInt();
+                    int freezeLevel = p.popInt();
 
                     createInstrument(symbol, base, quote, digits, contractSize, tickValue, bid, ask);
+
+                    // @TODO: Permitir atualizar o stop e freeze levels da conta, criar novo tópico
+                    InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
+                    instrument.setStopLevel(stopLevel);
+                    instrument.setFreezeLevel(freezeLevel);
+
+                    CLIENTS_BY_INSTRUMENT.put(instrument, client);
 
                     setServerTime(Instant.ofEpochSecond(time));
                     break;
@@ -132,42 +180,59 @@ public class MetatraderBroker extends Broker {
     }
 
     @Override
-    public Position getPosition(Instrument instrument) throws Exception {
+    public void buy(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException {
+        try {
+            final MT5SocketClient client = CLIENTS_BY_INSTRUMENT.get(instrument);
+            if (client == null) {
+                return;
+            }
+
+            client.exec(Command.BUY, price, volume, deviation, sl, tp);
+
+            // Executado com sucesso, adicionar uma ordem SEM NÚMERO com stado OrderState.REQUEST_ADD na lista de ordens abertas
+            List<Order> orders = getOrders(instrument);
+
+            // Long id, Long position, Instant time, OrderType type, OrderState state, OrderFilling filling,
+            // double price, double volume, double stopLoss, double takeProfit, double stopLimit
+            orders.add(new Order(0L, 0L, Instant.now(), OrderType.BUY, OrderState.REQUEST_ADD, OrderFilling.FOK, price, volume, sl, tp, 0));
+
+            setOrders(instrument, orders);
+
+        } catch (IOException | InterruptedException ex) {
+            throw new TradeException(TradeExceptionReason.ERROR, ex);
+        } catch (MT5Exception ex) {
+            // @TODO: Tratar erros
+            throw new TradeException(TradeExceptionReason.ERROR, ex);
+        }
+    }
+
+    @Override
+    public void sell(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public double stopLevel(Instrument instrument) {
+    public void buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public double freezeLevel(Instrument instrument) {
+    public void sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public Order buy(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException {
+    public void buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public Order sell(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException {
+    public void sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public Order buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Order sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Order sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
+    public void modify(Position position, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -182,22 +247,12 @@ public class MetatraderBroker extends Broker {
     }
 
     @Override
-    public void modify(Position position, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public void close(Position position, double price, long deviation) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void closePartial(Position position, double price, double volume, long deviation) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Order buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

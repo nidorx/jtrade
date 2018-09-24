@@ -8,7 +8,7 @@ package com.github.nidorx.jtrade.broker.impl.metatrader.model;
 public enum Command {
 
     SYMBOL("Symbol", 2),
-    ACCOUNT("Account", 3)
+    BUY("Buy", 3),
     ;
     
 

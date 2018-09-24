@@ -2,7 +2,6 @@ package com.github.nidorx.jtrade.core;
 
 import com.github.nidorx.jtrade.util.SDParser;
 import java.time.Instant;
-import java.util.Currency;
 
 /**
  * Informações sobre uma conta de negociação em um instante específico

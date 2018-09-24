@@ -292,7 +292,8 @@ public class MT5SocketClient {
      * @param message
      */
     private void processMessage(String message) {
-        System.out.println(message);
+        
+        
         if (message.startsWith("#")) {
             // Está respondendo a uma mensagem sincronizada, no formato "#<ID_REQUISICAO>#<CONTEUDO>"
 
@@ -308,9 +309,9 @@ public class MT5SocketClient {
                 REQUESTS.get(id).resolve(content);
                 REQUESTS.remove(id);
             }
-        } else if (message.startsWith("\\*")) {
+        } else if (message.startsWith("*")) {
             // Está respondendo a um topico, no formato "*<ID_TOPICO>*<CONTEUDO>"
-
+//            System.out.println(message);;
             final String[] parts = message.split("\\*", 3);
             if (parts.length != 3) {
                 // Formato de mensagem inválida
@@ -338,7 +339,7 @@ public class MT5SocketClient {
                 callback.accept(topic.decode(content));
             });
         } else {
-            System.out.println(message);
+//            System.out.println(message);
         }
     }
 

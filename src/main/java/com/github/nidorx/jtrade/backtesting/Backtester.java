@@ -43,16 +43,6 @@ public class Backtester extends Broker {
     }
 
     @Override
-    public double stopLevel(Instrument instrument) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double freezeLevel(Instrument instrument) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public Order buy(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

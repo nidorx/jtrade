@@ -61,9 +61,9 @@ public abstract class Strategy {
     /**
      * Execução da estratégia para cada candle
      *
-     * @param rates
+     * @param rate
      */
-    public abstract void onRate(Rate rates);
+    public abstract void onRate(Rate rate);
 
     /**
      * Permite a implementação do indicador executar quaisquer rotinas de limpeza quando este indicador for desconectado

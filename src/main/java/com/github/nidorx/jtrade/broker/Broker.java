@@ -12,7 +12,6 @@ import com.github.nidorx.jtrade.core.Tick;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +34,9 @@ public abstract class Broker {
      */
     private Instant serverTime = Instant.EPOCH;
 
+    /**
+     * Informações atualizadas sobre a conta de operação
+     */
     private Account account;
 
     /**
@@ -48,6 +50,16 @@ public abstract class Broker {
     private final Map<Instrument, Strategy> strategies = new ConcurrentHashMap<>();
 
     /**
+     * As posições abertas por instrumento
+     */
+    private final Map<Instrument, List<Position>> positions = new ConcurrentHashMap<>();
+
+    /**
+     * As ordens abertas por instrumento não associadas a uma posição
+     */
+    private final Map<Instrument, List<Order>> orders = new ConcurrentHashMap<>();
+
+    /**
      * Obtém o nome único do Broker, usado para persistir os TimeSeries em disco
      *
      * @return
@@ -55,36 +67,17 @@ public abstract class Broker {
     public abstract String getName();
 
     /**
-     * Obtém a posição aberta (se disponível) para o simbolo informado
+     * Instant Execution
      *
      * @param instrument
-     * @return
-     * @throws java.lang.Exception
+     * @param price
+     * @param volume
+     * @param deviation
+     * @param sl
+     * @param tp
+     * @throws TradeException
      */
-    public abstract Position getPosition(Instrument instrument) throws Exception;
-
-    /**
-     * Minimal permissible StopLoss/TakeProfit value in points.
-     *
-     * channel of prices (in points) from the current price, inside which one can't place Stop Loss, Take Profit and
-     * pending orders. When placing an order inside the channel, the server will return message "Invalid Stops" and will
-     * not accept the order.
-     *
-     * @param instrument
-     * @return
-     */
-    public abstract double stopLevel(Instrument instrument);
-
-    /**
-     * Order freeze level in points.
-     *
-     * If the execution price lies within the range defined by the freeze level, the order cannot be modified, canceled
-     * or closed.
-     *
-     * @param instrument
-     * @return
-     */
-    public abstract double freezeLevel(Instrument instrument);
+    public abstract void buy(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
 
     /**
      * Instant Execution
@@ -95,24 +88,9 @@ public abstract class Broker {
      * @param deviation
      * @param sl
      * @param tp
-     * @return
      * @throws TradeException
      */
-    public abstract Order buy(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
-
-    /**
-     * Instant Execution
-     *
-     * @param instrument
-     * @param price
-     * @param volume
-     * @param deviation
-     * @param sl
-     * @param tp
-     * @return
-     * @throws TradeException
-     */
-    public abstract Order sell(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
+    public abstract void sell(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
 
     /**
      * Buy Limit - Pending Order
@@ -126,22 +104,21 @@ public abstract class Broker {
      * @param volume
      * @param sl
      * @param tp
-     * @return
      * @throws TradeException
      */
-    public abstract Order buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+    public abstract void buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
 
-    public abstract Order sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+    public abstract void sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
 
-    public abstract Order sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+    public abstract void buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
 
-    public abstract Order buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+    public abstract void sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
+
+    public abstract void modify(Position position, double sl, double tp) throws TradeException;
 
     public abstract void modify(Order order, double price, double volume, double sl, double tp) throws TradeException;
 
     public abstract void remove(Order order) throws TradeException;
-
-    public abstract void modify(Position position, double sl, double tp) throws TradeException;
 
     public abstract void close(Position position, double price, long deviation) throws TradeException;
 
@@ -152,11 +129,10 @@ public abstract class Broker {
      *
      * @param instrument
      * @param volume
-     * @return
      * @throws TradeException
      */
-    public final Order buy(Instrument instrument, double volume) throws TradeException {
-        return buy(instrument, instrument.ask(), volume, 0);
+    public final void buy(Instrument instrument, double volume) throws TradeException {
+        buy(instrument, instrument.ask(), volume, 0);
     }
 
     /**
@@ -166,11 +142,10 @@ public abstract class Broker {
      * @param price
      * @param volume
      * @param deviation
-     * @return
      * @throws TradeException
      */
-    public final Order buy(Instrument instrument, double price, double volume, long deviation) throws TradeException {
-        return buy(instrument, price, volume, deviation, 0, 0);
+    public final void buy(Instrument instrument, double price, double volume, long deviation) throws TradeException {
+        buy(instrument, price, volume, deviation, 0, 0);
     }
 
     /**
@@ -178,11 +153,10 @@ public abstract class Broker {
      *
      * @param instrument
      * @param volume
-     * @return
      * @throws TradeException
      */
-    public final Order sell(Instrument instrument, double volume) throws TradeException {
-        return sell(instrument, instrument.bid(), volume, 0);
+    public final void sell(Instrument instrument, double volume) throws TradeException {
+        sell(instrument, instrument.bid(), volume, 0);
     }
 
     /**
@@ -192,11 +166,10 @@ public abstract class Broker {
      * @param price
      * @param volume
      * @param deviation
-     * @return
      * @throws TradeException
      */
-    public final Order sell(Instrument instrument, double price, double volume, long deviation) throws TradeException {
-        return sell(instrument, price, volume, deviation, 0, 0);
+    public final void sell(Instrument instrument, double price, double volume, long deviation) throws TradeException {
+        sell(instrument, price, volume, deviation, 0, 0);
     }
 
     /**
@@ -204,23 +177,22 @@ public abstract class Broker {
      * @param instrument
      * @param price
      * @param volume
-     * @return
      * @throws TradeException
      */
-    public final Order buyLimit(Instrument instrument, double price, double volume) throws TradeException {
-        return buyLimit(instrument, price, volume, 0, 0);
+    public final void buyLimit(Instrument instrument, double price, double volume) throws TradeException {
+        buyLimit(instrument, price, volume, 0, 0);
     }
 
-    public final Order sellLimit(Instrument instrument, double price, double volume) throws TradeException {
-        return sellLimit(instrument, price, volume, 0, 0);
+    public final void sellLimit(Instrument instrument, double price, double volume) throws TradeException {
+        sellLimit(instrument, price, volume, 0, 0);
     }
 
-    public final Order buyStop(Instrument instrument, double price, double volume) throws TradeException {
-        return buyStop(instrument, price, volume, 0, 0);
+    public final void buyStop(Instrument instrument, double price, double volume) throws TradeException {
+        buyStop(instrument, price, volume, 0, 0);
     }
 
-    public final Order sellStop(Instrument instrument, double price, double volume) throws TradeException {
-        return sellStop(instrument, price, volume, 0, 0);
+    public final void sellStop(Instrument instrument, double price, double volume) throws TradeException {
+        sellStop(instrument, price, volume, 0, 0);
     }
 
     public final void modify(Order order, double price, double volume) throws TradeException {
@@ -271,6 +243,34 @@ public abstract class Broker {
     }
 
     /**
+     * Obtém as posições abertas (se disponível) para o simbolo informado
+     *
+     * @param instrument
+     * @return
+     */
+    public final List<Position> getPositions(Instrument instrument) {
+        if (!positions.containsKey(instrument)) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(positions.get(instrument));
+    }
+
+    /**
+     * Obtém as ordens abertas para o símbolo
+     *
+     * As ordens abertas não estão associadas a uma posição ainda
+     *
+     * @param instrument
+     * @return
+     */
+    public final List<Order> getOrders(Instrument instrument) {
+        if (!orders.containsKey(instrument)) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(orders.get(instrument));
+    }
+
+    /**
      * Obtém a estratégia registrada para o instrumento
      *
      * @param symbol
@@ -283,21 +283,6 @@ public abstract class Broker {
             return null;
         }
         return strategies.get(instrument);
-    }
-
-    /**
-     * Obtém as Ordem ativas para o símbolo informado
-     *
-     * @param instrument
-     * @return
-     * @throws Exception
-     */
-    public List<Order> getOrders(Instrument instrument) throws Exception {
-        final Position position = getPosition(instrument);
-        if (position == null) {
-            return null;
-        }
-        return position.getOrders();
     }
 
     /**
@@ -315,7 +300,19 @@ public abstract class Broker {
     public Cancelable register(final Strategy strategy, final String symbol) throws Exception {
 
         final Instrument instrument = getInstrument(symbol);
-        if (getStrategy(symbol) != null) {
+
+        final Cancelable cancelable = () -> {
+            if (strategies.containsKey(instrument)) {
+                strategies.get(instrument).release();
+                strategies.remove(instrument);
+            }
+        };
+
+        final Strategy registered = getStrategy(symbol);
+        if (registered != null) {
+            if (registered.equals(strategy)) {
+                return cancelable;
+            }
             throw new Exception("A strategy is already registered for the symbol:" + symbol);
         }
 
@@ -326,12 +323,7 @@ public abstract class Broker {
         strategy.registerOn(this, symbol);
         strategy.initialize(getAccount());
 
-        return () -> {
-            if (strategies.containsKey(instrument)) {
-                strategies.get(instrument).release();
-                strategies.remove(instrument);
-            }
-        };
+        return cancelable;
     }
 
     /**
@@ -360,6 +352,38 @@ public abstract class Broker {
      */
     protected final void setServerTime(Instant instant) {
         serverTime = instant;
+    }
+
+    /**
+     * Permite definir as posições abertas
+     *
+     * @param instrument
+     * @param newPositions
+     */
+    protected final void setPositions(Instrument instrument, final List<Position> newPositions) {
+        if (newPositions == null || newPositions.isEmpty()) {
+            if (this.positions.containsKey(instrument)) {
+                this.positions.remove(instrument);
+            }
+        } else {
+            this.positions.put(instrument, new ArrayList<>(newPositions));
+        }
+    }
+
+    /**
+     * Permite definir as ordens abertas que não possuem posição
+     *
+     * @param instrument
+     * @param newOrders
+     */
+    protected final void setOrders(Instrument instrument, final List<Order> newOrders) {
+        if (newOrders == null || newOrders.isEmpty()) {
+            if (this.orders.containsKey(instrument)) {
+                this.orders.remove(instrument);
+            }
+        } else {
+            this.orders.put(instrument, new ArrayList<>(newOrders));
+        }
     }
 
     /**
@@ -431,26 +455,8 @@ public abstract class Broker {
         instruments.put(symbol, new InstrumentImpl(symbol, base, quote));
     }
 
-    /**
-     * Permite ao broker registrar os instrumentos que ele gerencia
-     *
-     * @param symbol
-     * @param base
-     * @param quote
-     * @param digits
-     * @param contractSize
-     * @param tickValue
-     * @throws Exception
-     */
-    protected final void createInstrument(String symbol, String base, String quote, int digits, double contractSize, double tickValue) throws Exception {
-        final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
-        if (instrument != null) {
-            throw new Exception("A instrument is already registered for the symbol:" + symbol);
-        }
-        instruments.put(symbol, new InstrumentImpl(symbol, base, quote, digits, contractSize, tickValue));
-    }
-
-    protected final void createInstrument(String symbol, String base, String quote, int digits, double contractSize, double tickValue, double bid, double ask) throws Exception {
+    protected final void createInstrument(String symbol, String base, String quote, int digits, double contractSize,
+            double tickValue, double bid, double ask) throws Exception {
         final InstrumentImpl instrument = (InstrumentImpl) getInstrument(symbol);
         if (instrument != null) {
             throw new Exception("A instrument is already registered for the symbol:" + symbol);

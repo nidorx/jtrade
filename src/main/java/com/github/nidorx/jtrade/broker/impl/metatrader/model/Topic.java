@@ -37,6 +37,14 @@ public enum Topic {
      */
     ACCOUNT(4, (String message) -> {
         return new Account(message);
+    }),
+    POSITION(5, (String message) -> {
+        // "<SYMBOL>|<POSITION><POSITION><POSITION>|<ORDER><ORDER><ORDER>|<DEAL><DEAL><DEAL>"
+        // POSITION: "TIME_MSC IDENTIFIER TYPE PRICE_OPEN VOLUME SL TP"   
+        // ORDER: "TIME_MSC TICKET POSITION TYPE STATE FILLING PRICE VOLUME SL TP STOPLIMIT"
+        // DEAL: "TIME_MSC TICKET ORDER POSITION TYPE ENTRY PRICE VOLUME COMMISSION SWAP PROFIT"
+
+        return message;
     });
 
     public static Topic getByCode(int code) {
