@@ -66,6 +66,14 @@ public class MetatraderBroker extends Broker {
                 if (rate.timeframe.equals(TimeFrame.M30)) {
                     // @TODO: Testar buy e verificar posições abertas
                     System.out.println(rate);
+
+                    if (this.getOrders().isEmpty() || this.getPositions().isEmpty()) {
+                        try {
+                            this.buy(0.2);
+                        } catch (TradeException ex) {
+                            Logger.getLogger(MetatraderBroker.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
                 }
                 // 1514859960
             }

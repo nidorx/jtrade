@@ -96,7 +96,7 @@ public class BacktesterForexMargin {
             // and for the placed order. The final margin is taken according to the highest of the two calculated values
             // ---------------------------------------------------------------------------------------------------------
             double posVolume = position.volume();
-            if (position.getType().equals(PositionType.BUY)) {
+            if (position.type.equals(PositionType.BUY)) {
                 switch (type) {
                     case BUY:
                     case BUY_LIMIT:

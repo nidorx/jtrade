@@ -2,7 +2,11 @@ package com.github.nidorx.jtrade.core;
 
 import com.github.nidorx.jtrade.util.Cancelable;
 import com.github.nidorx.jtrade.broker.Broker;
+import com.github.nidorx.jtrade.broker.exception.TradeException;
+import com.github.nidorx.jtrade.broker.trading.Order;
+import com.github.nidorx.jtrade.broker.trading.Position;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -71,11 +75,11 @@ public abstract class Strategy {
      */
     protected abstract void onRelease();
 
-    public Broker getBroker() {
+    public final Broker getBroker() {
         return broker;
     }
 
-    public Instrument getInstrument() {
+    public final Instrument getInstrument() {
         return instrument;
     }
 
@@ -85,7 +89,7 @@ public abstract class Strategy {
      * Ao fazer isso, essa estratégia deixa de receber atualizações do {@link Broker} e portanto, não realiza mais
      * operações
      */
-    public void release() {
+    public final void release() {
         if (brokerListener != null) {
             brokerListener.cancel();
             brokerListener = null;
@@ -110,7 +114,7 @@ public abstract class Strategy {
      * @param symbol
      * @throws Exception
      */
-    public void registerOn(final Broker broker, final String symbol) throws Exception {
+    public final void registerOn(final Broker broker, final String symbol) throws Exception {
         if (!broker.equals(this.broker)) {
             release();
             this.broker = broker;
@@ -159,5 +163,97 @@ public abstract class Strategy {
                 this.onTickEnd = broker.getServerTime();
             }
         }
+    }
+
+    public final List<Position> getPositions() {
+        return this.getBroker().getPositions(this.getInstrument());
+    }
+
+    public final List<Order> getOrders() {
+        return this.getBroker().getOrders(this.getInstrument());
+    }
+
+    public final void buy(double volume) throws TradeException {
+        this.getBroker().buy(this.getInstrument(), this.getInstrument().ask(), volume, 0);
+    }
+
+    public final void buy(double price, double volume, long deviation) throws TradeException {
+        this.getBroker().buy(this.getInstrument(), price, volume, deviation, 0, 0);
+    }
+
+    public final void buy(double price, double volume, long deviation, double sl, double tp) throws TradeException {
+        this.getBroker().buy(this.getInstrument(), price, volume, deviation, sl, tp);
+    }
+
+    public final void sell(double volume) throws TradeException {
+        this.getBroker().sell(this.getInstrument(), volume);
+    }
+
+    public final void sell(double price, double volume, long deviation) throws TradeException {
+        this.getBroker().sell(this.getInstrument(), price, volume, deviation);
+    }
+
+    public final void sell(double price, double volume, long deviation, double sl, double tp) throws TradeException {
+        this.getBroker().sell(this.getInstrument(), price, volume, deviation, sl, tp);
+    }
+
+    public final void buyLimit(double price, double volume) throws TradeException {
+        this.getBroker().buyLimit(this.getInstrument(), price, volume);
+    }
+
+    public final void buyLimit(double price, double volume, double sl, double tp) throws TradeException {
+        this.getBroker().buyLimit(this.getInstrument(), price, volume, sl, tp);
+    }
+
+    public final void sellLimit(double price, double volume) throws TradeException {
+        this.getBroker().sellLimit(this.getInstrument(), price, volume);
+    }
+
+    public final void sellLimit(double price, double volume, double sl, double tp) throws TradeException {
+        this.getBroker().sellLimit(this.getInstrument(), price, volume, sl, tp);
+    }
+
+    public final void buyStop(double price, double volume) throws TradeException {
+        this.getBroker().buyStop(this.getInstrument(), price, volume);
+    }
+
+    public final void buyStop(double price, double volume, double sl, double tp) throws TradeException {
+        this.getBroker().buyStop(this.getInstrument(), price, volume, sl, tp);
+    }
+
+    public final void sellStop(double price, double volume, double sl, double tp) throws TradeException {
+        this.getBroker().sellStop(this.getInstrument(), price, volume, sl, tp);
+    }
+
+    public final void sellStop(double price, double volume) throws TradeException {
+        this.getBroker().sellStop(this.getInstrument(), price, volume);
+    }
+
+    public final void modify(Position position, double sl, double tp) throws TradeException {
+        this.getBroker().modify(position, sl, tp);
+    }
+
+    public final void modify(Order order, double price, double volume) throws TradeException {
+        this.getBroker().modify(order, price, volume);
+    }
+
+    public final void modify(Order order, double price, double volume, double sl, double tp) throws TradeException {
+        this.getBroker().modify(order, price, volume, sl, tp);
+    }
+
+    public final void remove(Order order) throws TradeException {
+        this.getBroker().remove(order);
+    }
+
+    public final void close(Position position, double price, long deviation) throws TradeException {
+        this.getBroker().close(position, price, deviation);
+    }
+
+    public final void closePartial(Position position, double price, double volume, long deviation) throws TradeException {
+        this.getBroker().closePartial(position, price, volume, deviation);
+    }
+
+    public final void modifyStop(Order order, double sl, double tp) throws TradeException {
+        this.getBroker().modifyStop(order, sl, tp);
     }
 }

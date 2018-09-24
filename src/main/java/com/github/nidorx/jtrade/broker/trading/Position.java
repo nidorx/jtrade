@@ -70,7 +70,7 @@ public class Position {
      *
      * @return
      */
-//    public double volume() {
+    public double volume() {
 //        double volume = orders.stream()
 //                .filter((order) -> order.getState().filled())
 //                .mapToDouble((order) -> {
@@ -86,7 +86,8 @@ public class Position {
 //                })
 //                .sum();
 //        return (type == PositionType.SELL) ? (volume * -1) : volume;
-//    }
+        return 0d;
+    }
 
     /**
      * Calcula o lucro/prejuizo da operação atual
