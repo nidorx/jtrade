@@ -30,7 +30,8 @@ public abstract class Broker {
      *
      * Usado nas estratégias e validações temporais.
      *
-     * Importante usar esta informação para garantir a integridade das estratégias
+     * Importante usar esta informação para garantir a integridade das
+     * estratégias
      */
     private Instant serverTime = Instant.EPOCH;
 
@@ -92,37 +93,9 @@ public abstract class Broker {
      */
     public abstract void sell(Instrument instrument, double price, double volume, long deviation, double sl, double tp) throws TradeException;
 
-    /**
-     * Buy Limit - Pending Order
-     * <p>
-     * a trade request to buy at the Ask price that is equal to or less than that specified in the order. The current
-     * price level is higher than the value specified in the order. Usually this order is placed in anticipation of that
-     * the security price will fall to a certain level and then will increase;
-     *
-     * @param instrument
-     * @param price
-     * @param volume
-     * @param sl
-     * @param tp
-     * @throws TradeException
-     */
-    public abstract void buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
-
-    public abstract void sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
-
-    public abstract void buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
-
-    public abstract void sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException;
-
-    public abstract void modify(Position position, double sl, double tp) throws TradeException;
-
-    public abstract void modify(Order order, double price, double volume, double sl, double tp) throws TradeException;
-
     public abstract void remove(Order order) throws TradeException;
 
     public abstract void close(Position position, double price, long deviation) throws TradeException;
-
-    public abstract void closePartial(Position position, double price, double volume, long deviation) throws TradeException;
 
     /**
      * Market Execution
@@ -170,37 +143,6 @@ public abstract class Broker {
      */
     public final void sell(Instrument instrument, double price, double volume, long deviation) throws TradeException {
         sell(instrument, price, volume, deviation, 0, 0);
-    }
-
-    /**
-     * @see Broker#buyLimit(deep.nidorx.core.ta.instrument.Instrument, double, double, long, double, double)
-     * @param instrument
-     * @param price
-     * @param volume
-     * @throws TradeException
-     */
-    public final void buyLimit(Instrument instrument, double price, double volume) throws TradeException {
-        buyLimit(instrument, price, volume, 0, 0);
-    }
-
-    public final void sellLimit(Instrument instrument, double price, double volume) throws TradeException {
-        sellLimit(instrument, price, volume, 0, 0);
-    }
-
-    public final void buyStop(Instrument instrument, double price, double volume) throws TradeException {
-        buyStop(instrument, price, volume, 0, 0);
-    }
-
-    public final void sellStop(Instrument instrument, double price, double volume) throws TradeException {
-        sellStop(instrument, price, volume, 0, 0);
-    }
-
-    public final void modify(Order order, double price, double volume) throws TradeException {
-        modify(order, price, volume, 0, 0);
-    }
-
-    public final void modifyStop(Order order, double sl, double tp) throws TradeException {
-        modify(order, 0, 0, sl, tp);
     }
 
     /**
@@ -288,9 +230,11 @@ public abstract class Broker {
     /**
      * Registra uma estratégia para ser executada neste contexto.
      *
-     * A estratégia passará a receber atualizações do contexto e executar transações no Broker deste contexto
+     * A estratégia passará a receber atualizações do contexto e executar
+     * transações no Broker deste contexto
      *
-     * Só é permitido uma única estratégia para um Instrumento, afim de evitar lógicas conflitantes
+     * Só é permitido uma única estratégia para um Instrumento, afim de evitar
+     * lógicas conflitantes
      *
      * @param strategy
      * @param symbol
@@ -387,7 +331,8 @@ public abstract class Broker {
     }
 
     /**
-     * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
+     * Permite ao broker ser informado quando um novo candle é fechado para o
+     * instrumento e frame específico
      *
      * @param tick
      */
@@ -418,7 +363,8 @@ public abstract class Broker {
     }
 
     /**
-     * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
+     * Permite ao broker ser informado quando um novo candle é fechado para o
+     * instrumento e frame específico
      *
      * @param rate
      * @throws java.lang.Exception
@@ -519,7 +465,8 @@ public abstract class Broker {
 ////                .forEach((t) -> t.add(ohlcs));
 //    }
     /**
-     * Faz o carregamento de uma timeséries que está salva em disco, afim de evitar rechamadas ao servidores
+     * Faz o carregamento de uma timeséries que está salva em disco, afim de
+     * evitar rechamadas ao servidores
      *
      * @param name
      * @param timeSeries

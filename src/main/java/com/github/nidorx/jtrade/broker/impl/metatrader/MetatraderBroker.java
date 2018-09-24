@@ -88,7 +88,8 @@ public class MetatraderBroker extends Broker {
     /**
      * Permite criar uma conexão com o EA
      *
-     * Somente é permitido criar conexões com o EA que estejam operando a mesma conta
+     * Somente é permitido criar conexões com o EA que estejam operando a mesma
+     * conta
      *
      * @param host
      * @param port
@@ -220,47 +221,12 @@ public class MetatraderBroker extends Broker {
     }
 
     @Override
-    public void buyLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void sellLimit(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void buyStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void sellStop(Instrument instrument, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void modify(Position position, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void modify(Order order, double price, double volume, double sl, double tp) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public void remove(Order order) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void close(Position position, double price, long deviation) throws TradeException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void closePartial(Position position, double price, double volume, long deviation) throws TradeException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
