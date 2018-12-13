@@ -6,15 +6,15 @@ import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.OrderType;
 import com.github.nidorx.jtrade.broker.trading.PositionType;
 import java.util.Currency;
-import lombok.Data;
 
 /**
- * Abriga as informações e calculo da margem de negociação de um ativo Forex no backtesting
+ * Abriga as informações e calculo da margem de negociação de um ativo Forex no
+ * backtesting
  *
  * @author Alex Rodin <contato@alexrodin.info>
- * @see https://www.metatrader5.com/en/terminal/help/trading_advanced/margin_forex
+ * @see
+ * https://www.metatrader5.com/en/terminal/help/trading_advanced/margin_forex
  */
-@Data
 public class BacktesterForexMargin {
 
     /**
@@ -23,56 +23,124 @@ public class BacktesterForexMargin {
     private final Currency marginCurrency;
 
     /**
-     * security deposit (margin) provided for a fixed-term contract to perform a one-lot deal. If the initial margin
-     * value is specified for the symbol, this is the value that is used. Margin calculation formulas are not applied to
-     * the appropriate calculation type.
+     * security deposit (margin) provided for a fixed-term contract to perform a
+     * one-lot deal. If the initial margin value is specified for the symbol,
+     * this is the value that is used. Margin calculation formulas are not
+     * applied to the appropriate calculation type.
      */
     private final double initialMargin;
 
     /**
-     * minimum security deposit (margin) a trader should have on his or her account to maintain a one-lot position.
+     * minimum security deposit (margin) a trader should have on his or her
+     * account to maintain a one-lot position.
      */
     private final double maintenanceMargin;
 
     /**
-     * a multiplier for calculating margin requirements for long positions relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for long positions
+     * relative to the basic margin amount.
      */
     private final MarginRate marginRateBuy;
 
     /**
-     * a multiplier for calculating margin requirements for short positions relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for short positions
+     * relative to the basic margin amount.
      */
     private final MarginRate marginRateSell;
 
     /**
-     * a multiplier for calculating margin requirements for Buy Limit orders relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for Buy Limit orders
+     * relative to the basic margin amount.
      */
     private final MarginRate marginRateBuyLimit;
 
     /**
-     * a multiplier for calculating margin requirements for Sell Limit orders relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for Sell Limit orders
+     * relative to the basic margin amount.
      */
     private final MarginRate marginRateSellLimit;
 
     /**
-     * a multiplier for calculating margin requirements for Buy Stop orders relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for Buy Stop orders
+     * relative to the basic margin amount.
      */
     private final MarginRate marginRateBuyStop;
 
     /**
-     * a multiplier for calculating margin requirements for Sell Stop orders relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for Sell Stop orders
+     * relative to the basic margin amount.
      */
     private final MarginRate marginRateSellStop;
 
     /**
-     * a multiplier for calculating margin requirements for Buy Stop Limit orders relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for Buy Stop Limit
+     * orders relative to the basic margin amount.
      */
     private final MarginRate marginRateBuyStopLimit;
 
     /**
-     * a multiplier for calculating margin requirements for Sell Stop Limit orders relative to the basic margin amount.
+     * a multiplier for calculating margin requirements for Sell Stop Limit
+     * orders relative to the basic margin amount.
      */
     private final MarginRate marginRateSellStopLimit;
+
+    public BacktesterForexMargin(Currency marginCurrency, double initialMargin, double maintenanceMargin, MarginRate marginRateBuy, MarginRate marginRateSell, MarginRate marginRateBuyLimit, MarginRate marginRateSellLimit, MarginRate marginRateBuyStop, MarginRate marginRateSellStop, MarginRate marginRateBuyStopLimit, MarginRate marginRateSellStopLimit) {
+        this.marginCurrency = marginCurrency;
+        this.initialMargin = initialMargin;
+        this.maintenanceMargin = maintenanceMargin;
+        this.marginRateBuy = marginRateBuy;
+        this.marginRateSell = marginRateSell;
+        this.marginRateBuyLimit = marginRateBuyLimit;
+        this.marginRateSellLimit = marginRateSellLimit;
+        this.marginRateBuyStop = marginRateBuyStop;
+        this.marginRateSellStop = marginRateSellStop;
+        this.marginRateBuyStopLimit = marginRateBuyStopLimit;
+        this.marginRateSellStopLimit = marginRateSellStopLimit;
+    }
+
+    public Currency getMarginCurrency() {
+        return marginCurrency;
+    }
+
+    public double getInitialMargin() {
+        return initialMargin;
+    }
+
+    public double getMaintenanceMargin() {
+        return maintenanceMargin;
+    }
+
+    public MarginRate getMarginRateBuy() {
+        return marginRateBuy;
+    }
+
+    public MarginRate getMarginRateSell() {
+        return marginRateSell;
+    }
+
+    public MarginRate getMarginRateBuyLimit() {
+        return marginRateBuyLimit;
+    }
+
+    public MarginRate getMarginRateSellLimit() {
+        return marginRateSellLimit;
+    }
+
+    public MarginRate getMarginRateBuyStop() {
+        return marginRateBuyStop;
+    }
+
+    public MarginRate getMarginRateSellStop() {
+        return marginRateSellStop;
+    }
+
+    public MarginRate getMarginRateBuyStopLimit() {
+        return marginRateBuyStopLimit;
+    }
+
+    public MarginRate getMarginRateSellStopLimit() {
+        return marginRateSellStopLimit;
+    }
 
     public double calculate(Instrument instument, Account account, double volume, OrderType type) throws Exception {
         double margin = 0.0;
@@ -162,8 +230,8 @@ public class BacktesterForexMargin {
     }
 
     /**
-     * Individual margin rates can be used for the initial and maintenance margin, as well as for short and long
-     * positions.
+     * Individual margin rates can be used for the initial and maintenance
+     * margin, as well as for short and long positions.
      */
     private double calculateBasic(Instrument instument, Account account, double volume) {
         double margin;
@@ -181,11 +249,12 @@ public class BacktesterForexMargin {
     }
 
     /**
-     * Individual margin rates can be used for the initial and maintenance margin, as well as for short and long
-     * positions.
+     * Individual margin rates can be used for the initial and maintenance
+     * margin, as well as for short and long positions.
      *
-     * The final margin requirements value calculated taking into account the conversion into the deposit currency, is
-     * additionally multiplied by the appropriate rate.
+     * The final margin requirements value calculated taking into account the
+     * conversion into the deposit currency, is additionally multiplied by the
+     * appropriate rate.
      *
      * @param instrument
      * @param account
@@ -232,23 +301,39 @@ public class BacktesterForexMargin {
     }
 
     /**
-     * The rates are set for the initial and maintenance margin individually. If no ratio is set for the maintenance
-     * margin (set to zero), the initial margin ratio is applied used for it.
+     * The rates are set for the initial and maintenance margin individually. If
+     * no ratio is set for the maintenance margin (set to zero), the initial
+     * margin ratio is applied used for it.
      */
-    @Data
     public static class MarginRate {
 
         /**
-         * security deposit (margin) provided for a fixed-term contract to perform a one-lot deal. If the initial margin
-         * value is specified for the symbol, this is the value that is used. Margin calculation formulas are not
-         * applied to the appropriate calculation type.
+         * security deposit (margin) provided for a fixed-term contract to
+         * perform a one-lot deal. If the initial margin value is specified for
+         * the symbol, this is the value that is used. Margin calculation
+         * formulas are not applied to the appropriate calculation type.
          */
         private final double initial;
 
         /**
-         * minimum security deposit (margin) a trader should have on his or her account to maintain a one-lot position.
+         * minimum security deposit (margin) a trader should have on his or her
+         * account to maintain a one-lot position.
          */
         private final double maintenance;
+
+        public MarginRate(double initial, double maintenance) {
+            this.initial = initial;
+            this.maintenance = maintenance;
+        }
+
+        public double getInitial() {
+            return initial;
+        }
+
+        public double getMaintenance() {
+            return maintenance;
+        }
+
     }
 
 }
