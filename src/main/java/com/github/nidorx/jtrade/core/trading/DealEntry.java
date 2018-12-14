@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.trading;
+package com.github.nidorx.jtrade.core.trading;
 
 /**
  * As operações (deal) diferem entre si não somente no seu conjunto de tipos em {@link DealType}, mas também na forma

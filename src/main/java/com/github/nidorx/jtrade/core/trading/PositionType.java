@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.trading;
+package com.github.nidorx.jtrade.core.trading;
 
 /**
  * A direção de uma posição em aberto (comprada ou vendida)

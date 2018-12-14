@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.trading;
+package com.github.nidorx.jtrade.core.trading;
 
 /**
  * Cada transação é caracterizada por um tipo,

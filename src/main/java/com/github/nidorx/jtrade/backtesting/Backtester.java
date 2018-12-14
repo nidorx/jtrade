@@ -4,9 +4,9 @@ import com.github.nidorx.jtrade.core.Strategy;
 import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.broker.Broker;
-import com.github.nidorx.jtrade.broker.exception.TradeException;
-import com.github.nidorx.jtrade.broker.trading.Order;
-import com.github.nidorx.jtrade.broker.trading.Position;
+import com.github.nidorx.jtrade.core.exception.TradeException;
+import com.github.nidorx.jtrade.core.trading.Order;
+import com.github.nidorx.jtrade.core.trading.Position;
 import com.github.nidorx.jtrade.core.Instrument;
 import java.time.Instant;
 

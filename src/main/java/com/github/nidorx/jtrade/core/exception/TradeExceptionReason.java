@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.exception;
+package com.github.nidorx.jtrade.core.exception;
 
 /**
  * @see https://www.mql5.com/en/docs/constants/errorswarnings/enum_trade_return_codes

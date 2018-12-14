@@ -1,5 +1,6 @@
-package com.github.nidorx.jtrade.core;
+package com.github.nidorx.jtrade.ta;
 
+import com.github.nidorx.jtrade.core.Rate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,7 @@ import java.util.function.Supplier;
  *
  * @author Alex
  */
-public final class Candlestick {
+public final class CandlestickPattern {
 
     /**
      * Cache de processamento imediato de listas. Evita o reprocessamento desnecssário no curto intervalo de tempo
@@ -97,8 +98,8 @@ public final class Candlestick {
      * <p>
      * A volatilidade é a Média exponencial dos tamanhos dos candles individuais para o período dos ultimos 25 candles.
      *
-     * @see Candlestick#averageDistance(java.util.List, int)
-     * @see Candlestick#size(info.alexrodin.ta.OHLC)
+     * @see CandlestickPattern#averageDistance(java.util.List, int)
+     * @see CandlestickPattern#size(info.alexrodin.ta.OHLC)
      */
     public static final Predicate<List<Rate>> LONG_LINE = (rates) -> {
         double avg = averageDistance(rates, 25);
@@ -114,9 +115,9 @@ public final class Candlestick {
      * <p>
      * A volatilidade é a Média exponencial dos tamanhos dos candles individuais para o período dos ultimos 25 candles.
      *
-     * @see Candlestick#LONG_LINE
-     * @see Candlestick#averageDistance(java.util.List, int)
-     * @see Candlestick#size(info.alexrodin.ta.OHLC)
+     * @see CandlestickPattern#LONG_LINE
+     * @see CandlestickPattern#averageDistance(java.util.List, int)
+     * @see CandlestickPattern#size(info.alexrodin.ta.OHLC)
      */
     public static final Predicate<List<Rate>> SHORT_LINE = LONG_LINE.negate();
 
@@ -137,7 +138,7 @@ public final class Candlestick {
     /**
      * Long White Candle
      * <p>
-     * Oposto de {@link Candlestick#LONG_BLACK_CANDLE}
+     * Oposto de {@link CandlestickPattern#LONG_BLACK_CANDLE}
      * <p>
      * Formação do padrão:
      * <ul>
@@ -145,7 +146,7 @@ public final class Candlestick {
      * <li> Sombras superiores e inferiores
      * <li> Nenhuma das sombras pode ser maior do que o corpo
      * <li> O corpo da vela é três vezes maior do que a média do tamanho dos corpos das últimas 5 ou 10 velas
-     * <li> Aparece como uma {@link Candlestick#LONG_LINE linha longa}
+     * <li> Aparece como uma {@link CandlestickPattern#LONG_LINE linha longa}
      * </ul>
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-white-candle/
@@ -174,7 +175,7 @@ public final class Candlestick {
     /**
      * Long Black Candle
      * <p>
-     * Oposto de {@link Candlestick#LONG_WHITE_CANDLE}
+     * Oposto de {@link CandlestickPattern#LONG_WHITE_CANDLE}
      * <p>
      * Formação do padrão:
      * <ul>
@@ -182,7 +183,7 @@ public final class Candlestick {
      * <li> Sombras superiores e inferiores
      * <li> Nenhuma das sombras pode ser maior do que o corpo
      * <li> O corpo da vela é três vezes maior do que a média do tamanho dos corpos das últimas 5 ou 10 velas
-     * <li> Aparece como uma {@link Candlestick#LONG_LINE linha longa}
+     * <li> Aparece como uma {@link CandlestickPattern#LONG_LINE linha longa}
      * </ul>
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-black-candle/
@@ -211,15 +212,15 @@ public final class Candlestick {
     /**
      * White Candle
      * <p>
-     * Oposto de {@link Candlestick#BLACK_CANDLE}
+     * Oposto de {@link CandlestickPattern#BLACK_CANDLE}
      * <p>
      * Formação do padrão:
      * <ul>
      * <li> Corpo branco
      * <li> Sombras superiores e inferiores
      * <li> Nenhuma das sombras pode ser maior do que o corpo
-     * <li> Aparece como uma {@link Candlestick#LONG_LINE linha longa}
-     * <li> NÃO SER UM {@link Candlestick#LONG_WHITE_CANDLE}
+     * <li> Aparece como uma {@link CandlestickPattern#LONG_LINE linha longa}
+     * <li> NÃO SER UM {@link CandlestickPattern#LONG_WHITE_CANDLE}
      * </ul>
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-black-candle/
@@ -248,15 +249,15 @@ public final class Candlestick {
     /**
      * Black Candle
      * <p>
-     * Oposto de {@link Candlestick#WHITE_CANDLE}
+     * Oposto de {@link CandlestickPattern#WHITE_CANDLE}
      * <p>
      * Formação do padrão:
      * <ul>
      * <li> Corpo preto
      * <li> Sombras superiores e inferiores
      * <li> Nenhuma das sombras pode ser maior do que o corpo
-     * <li> Aparece como uma {@link Candlestick#LONG_LINE linha longa}
-     * <li> NÃO SER UM {@link Candlestick#LONG_BLACK_CANDLE}
+     * <li> Aparece como uma {@link CandlestickPattern#LONG_LINE linha longa}
+     * <li> NÃO SER UM {@link CandlestickPattern#LONG_BLACK_CANDLE}
      * </ul>
      *
      * @see http://www.candlescanner.com/candlestick-patterns/long-black-candle/
@@ -496,7 +497,7 @@ public final class Candlestick {
      * @param rates
      * @param period
      * @return
-     * @see Candlestick#size(info.alexrodin.ta.OHLC)
+     * @see CandlestickPattern#size(info.alexrodin.ta.OHLC)
      * @see http://www.candlescanner.com/candlestick-patterns/long-and-short-lines/
      */
     private static double averageDistance(List<Rate> rates, int period) {

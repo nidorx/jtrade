@@ -1,8 +1,8 @@
-package com.github.nidorx.jtrade.indicator.impl;
+package com.github.nidorx.jtrade.ta.indicator.impl;
 
-import com.github.nidorx.jtrade.indicator.AppliedPrice;
-import com.github.nidorx.jtrade.indicator.IndicatorBuffer;
-import com.github.nidorx.jtrade.indicator.Indicator;
+import com.github.nidorx.jtrade.core.AppliedPrice;
+import com.github.nidorx.jtrade.ta.indicator.IndicatorBuffer;
+import com.github.nidorx.jtrade.ta.indicator.Indicator;
 import java.time.Instant;
 import java.util.concurrent.atomic.DoubleAdder;
 

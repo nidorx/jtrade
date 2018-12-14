@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.indicator;
+package com.github.nidorx.jtrade.ta.indicator;
 
 import java.time.Instant;
 import java.util.SortedMap;

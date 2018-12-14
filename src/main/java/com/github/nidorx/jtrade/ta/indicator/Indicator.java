@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.indicator;
+package com.github.nidorx.jtrade.ta.indicator;
 
 import com.github.nidorx.jtrade.util.function.Cancelable;
 import com.github.nidorx.jtrade.core.TimeSeries;

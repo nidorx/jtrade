@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.broker;
 
-import com.github.nidorx.jtrade.broker.trading.Position;
+import com.github.nidorx.jtrade.core.trading.Position;
 import java.time.Instant;
 import org.junit.After;
 import org.junit.AfterClass;

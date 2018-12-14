@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.util;
+package com.github.nidorx.jtrade.core.impl;
 
 import com.github.nidorx.jtrade.util.function.Cancelable;
 import java.time.Instant;

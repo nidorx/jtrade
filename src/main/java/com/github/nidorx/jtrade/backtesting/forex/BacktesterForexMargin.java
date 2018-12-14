@@ -2,9 +2,9 @@ package com.github.nidorx.jtrade.backtesting.forex;
 
 import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.core.Instrument;
-import com.github.nidorx.jtrade.broker.trading.Position;
-import com.github.nidorx.jtrade.broker.trading.OrderType;
-import com.github.nidorx.jtrade.broker.trading.PositionType;
+import com.github.nidorx.jtrade.core.trading.Position;
+import com.github.nidorx.jtrade.core.trading.OrderType;
+import com.github.nidorx.jtrade.core.trading.PositionType;
 import java.util.Currency;
 
 /**

@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.trading;
+package com.github.nidorx.jtrade.core.trading;
 
 /**
  * Representação dos tipos de Ordem existentes, usados ao enviar uma solicitação de negociação

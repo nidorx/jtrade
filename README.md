@@ -3,6 +3,8 @@
 Bilioteca Java para criação de aplicações de Backtesting, Análise Técnica e Trading
 
 
+## Conceitos básicos
+
 ## Core
 
 - OHLC.java

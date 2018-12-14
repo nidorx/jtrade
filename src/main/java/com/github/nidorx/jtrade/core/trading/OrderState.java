@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.trading;
+package com.github.nidorx.jtrade.core.trading;
 
 /**
  * Os estados possíveis de uma ordem. Cada ordem tem um status que descreve o seu estado.

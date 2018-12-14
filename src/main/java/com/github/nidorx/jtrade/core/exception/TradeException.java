@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.broker.exception;
+package com.github.nidorx.jtrade.core.exception;
 
 /**
  * Request processing error

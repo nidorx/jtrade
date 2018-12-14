@@ -5,7 +5,6 @@ import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.core.Tick;
 import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.core.TimeSeries;
-import com.github.nidorx.jtrade.util.TimeSeriesGeneric;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;

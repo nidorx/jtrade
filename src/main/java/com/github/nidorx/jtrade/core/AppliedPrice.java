@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.indicator;
+package com.github.nidorx.jtrade.core;
 
 import com.github.nidorx.jtrade.core.Rate;
 import java.util.function.Function;
