@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.core;
 
-import com.github.nidorx.jtrade.util.Cancelable;
+import com.github.nidorx.jtrade.util.function.Cancelable;
 import com.github.nidorx.jtrade.broker.Broker;
 import com.github.nidorx.jtrade.broker.exception.TradeException;
 import com.github.nidorx.jtrade.broker.trading.Order;

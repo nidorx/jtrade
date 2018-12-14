@@ -1,5 +1,6 @@
 package com.github.nidorx.jtrade.util;
 
+import com.github.nidorx.jtrade.util.function.Cancelable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +43,11 @@ public abstract class TimeSeriesGeneric<T> {
     private final Map<Integer, Long> indexedReverse = new HashMap<>();
 
     /**
+     * Lista de callbacks que serão invocados quando novos valores forem adicionados
+     */
+    private final List<Consumer<Boolean>> callbacks = new ArrayList<>();
+
+    /**
      * Permite extrair o instant do item
      *
      * @param item
@@ -74,6 +80,7 @@ public abstract class TimeSeriesGeneric<T> {
         // Quando for inserido um registro mais antigo do que o ultimo registro salvo, 
         // pode significar que o window frame foi modificado ou registros mais antigos foram adicionados
         // força a atualização dos indicadores
+        boolean oldValuesAdded = itemInstant.isBefore(data.firstKey());
         this.data.put(itemInstant, item);
 
         // Refaz os indices
@@ -82,6 +89,24 @@ public abstract class TimeSeriesGeneric<T> {
             indexed.put(instant.getEpochSecond(), i);
             indexedReverse.put(i++, instant.getEpochSecond());
         }
+
+        // Informa sobre alteração nos registros
+        callbacks.forEach(callback -> {
+            callback.accept(oldValuesAdded);
+        });
+    }
+
+    public Cancelable onUpdate(Consumer<Boolean> callback) {
+        callbacks.add(callback);
+
+        // Já executa o callback, se houver registros
+        if (!this.data.isEmpty()) {
+            callback.accept(true);
+        }
+
+        return () -> {
+            callbacks.remove(callback);
+        };
     }
 
     public int size() {

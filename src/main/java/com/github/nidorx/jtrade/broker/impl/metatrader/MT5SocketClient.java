@@ -2,7 +2,7 @@ package com.github.nidorx.jtrade.broker.impl.metatrader;
 
 import com.github.nidorx.jtrade.broker.impl.metatrader.model.Topic;
 import com.github.nidorx.jtrade.broker.impl.metatrader.model.Command;
-import com.github.nidorx.jtrade.util.Cancelable;
+import com.github.nidorx.jtrade.util.function.Cancelable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

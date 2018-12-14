@@ -1,4 +1,4 @@
-package com.github.nidorx.jtrade.util;
+package com.github.nidorx.jtrade.util.function;
 
 /**
  * FunctionalInterface para ações canceláveis

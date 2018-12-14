@@ -5,7 +5,7 @@ import com.github.nidorx.jtrade.core.impl.InstrumentImpl;
 import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.broker.trading.Order;
-import com.github.nidorx.jtrade.util.Cancelable;
+import com.github.nidorx.jtrade.util.function.Cancelable;
 import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.core.Strategy;
 import com.github.nidorx.jtrade.core.Tick;

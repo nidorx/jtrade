@@ -13,9 +13,9 @@ import java.util.function.BiConsumer;
  * @see Indicator#createBuffer(boolean)
  * @see Indicator#getOutput()
  */
-public class Buffer {
+public class IndicatorBuffer {
 
-    private final SortedMap<Instant, Output> output = new TreeMap<>();
+    private final SortedMap<Instant, IndicatorOutput> output = new TreeMap<>();
 
     /**
      * Define um valor para o instante
@@ -29,7 +29,7 @@ public class Buffer {
             color = output.get(instant).color;
         }
 
-        output.put(instant, new Output(value, color));
+        output.put(instant, new IndicatorOutput(value, color));
     }
 
     /**
@@ -39,7 +39,7 @@ public class Buffer {
      * @return
      */
     public Double value(Instant instant) {
-        Output out = output.get(instant);
+        IndicatorOutput out = output.get(instant);
         return out == null ? null : out.value;
     }
 
@@ -55,7 +55,7 @@ public class Buffer {
             value = output.get(instant).value;
         }
 
-        output.put(instant, new Output(value, color));
+        output.put(instant, new IndicatorOutput(value, color));
     }
 
     /**
@@ -65,7 +65,7 @@ public class Buffer {
      * @return
      */
     public Integer color(Instant instant) {
-        Output out = output.get(instant);
+        IndicatorOutput out = output.get(instant);
         return out == null ? null : out.color;
     }
 
@@ -74,7 +74,7 @@ public class Buffer {
      *
      * @param action
      */
-    public void forEachOutput(BiConsumer<Instant, Output> action) {
+    public void forEachOutput(BiConsumer<Instant, IndicatorOutput> action) {
         output.forEach(action);
     }
 }

@@ -1,11 +1,12 @@
 package com.github.nidorx.jtrade.indicator;
 
-import com.github.nidorx.jtrade.util.Cancelable;
+import com.github.nidorx.jtrade.util.function.Cancelable;
 import com.github.nidorx.jtrade.core.TimeSeries;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -36,7 +37,7 @@ public abstract class Indicator {
     /**
      * Os buffers de saída de dados
      */
-    private final List<Buffer> data = new ArrayList<>();
+    private IndicatorBuffer[] data;
 
     /**
      * O TimeSeries a que este indicador está associado
@@ -48,7 +49,17 @@ public abstract class Indicator {
      *
      * Permite que a implementação do indicador verifique os itens calculados anteriormente
      */
-    protected List<Instant> calculated = new LinkedList<>();
+    protected List<Instant> calculated = new ArrayList<>();
+
+    /**
+     * Necessário determinar a quantidade de buffers que o Indiacador vai usar para dados.
+     *
+     * Essa informação pode ser usada por ferramentas para calculo da quantidade de dados usados em processamento por
+     * exemplo
+     *
+     * @return
+     */
+    abstract public int getQtdBuffers();
 
     /**
      * Executa o processamento do indicador
@@ -99,27 +110,35 @@ public abstract class Indicator {
     public void appendTo(final TimeSeries ts) {
         release();
         this.timeSeries = ts;
-//        cancelListener = ts.onUpdate((addedOldData) -> {
-//            tsLastUpdate++;
-//
-//            // Quando o timeséries recebe valores antigos, força o re-calculo do indicador
-//            if (addedOldData) {
-//                lastCalculated = -1;
-//                calculated.clear();
-//            }
-//        });
+        cancelListener = ts.onUpdate((addedOldData) -> {
+            tsLastUpdate++;
+
+            // Quando o timeséries recebe valores antigos, força o re-calculo do indicador
+            if (addedOldData) {
+                lastCalculated = -1;
+                calculated.clear();
+            }
+        });
     }
 
     /**
-     * Obtém os dados de processamento do indicador
+     * Obtém os dados de processamento do indicador, com ordenação invertida, assim como o TimeSeries (Mais recente =
+     * indice 0)
      *
      * @return
      */
-    public SortedMap<Instant, List<Output>> getOutput() {
+    public final List<Map<Instant, IndicatorOutput>> getOutput() {
         // Verifica se é necessário realizar calculos
         if (tsLastUpdate > lastCalculated) {
+
+            // Ordena de forma inversa a lista
+            Collections.sort(calculated, (a, b) -> {
+                // Indice 0 deve ser o valor mais recente
+                return b.compareTo(a);
+            });
+
             // Obtém os itens que precisam ser processados ainda
-            final Instant prev = calculated.isEmpty() ? null : calculated.get(calculated.size() - 1);
+            final Instant prev = calculated.isEmpty() ? null : calculated.get(0);
             timeSeries.time(prev).stream()
                     // Ordena do mais antigo para o mais novo (no TimeSeries, o indice 0 é o mais recente)
                     .sorted((a, b) -> a.compareTo(b))
@@ -134,20 +153,22 @@ public abstract class Indicator {
             lastCalculated = tsLastUpdate;
         }
 
-        final SortedMap<Instant, List<Output>> result = new TreeMap<>();
+        final List<Map<Instant, IndicatorOutput>> result = new ArrayList<>();
 
-        data.forEach(buffer -> {
+        for (int i = 0; i < getQtdBuffers(); i++) {
+            final IndicatorBuffer buffer = getBuffer(i);
+            final SortedMap<Instant, IndicatorOutput> bufferOutputs = Collections.synchronizedSortedMap(new TreeMap<>((a, b) -> {
+                // Indice 0 deve ser o valor mais recente
+                return b.compareTo(a);
+            }));
+            
             buffer.forEachOutput((instant, output) -> {
-                final List<Output> outputs;
-                if (result.containsKey(instant)) {
-                    outputs = result.get(instant);
-                } else {
-                    outputs = new ArrayList<>();
-                    result.put(instant, outputs);
-                }
-                outputs.add(output);
+                bufferOutputs.put(instant, output);
             });
-        });
+            
+            result.add(bufferOutputs);
+        }
+
         return result;
     }
 
@@ -159,14 +180,22 @@ public abstract class Indicator {
      * Para um buffer de dados de saída seus dados serão entregues ao acionar o método
      * {@link Indicator#getOutput() getOutput}
      *
-     * @param isOutputBuffer Informa que esta é um buffer de saída
+     * @param index Se index menor que zero ou maior ou igual a getQtdBuffers, não é um buffer de saída.
      * @return
      */
-    protected final Buffer createBuffer(boolean isOutputBuffer) {
-        final Buffer buffer = new Buffer();
-        if (isOutputBuffer) {
-            data.add(buffer);
+    protected final IndicatorBuffer getBuffer(int index) {
+        if (index < 0 || index >= getQtdBuffers()) {
+            return new IndicatorBuffer();
         }
-        return buffer;
+
+        if (data == null) {
+            data = new IndicatorBuffer[getQtdBuffers()];
+        }
+
+        if (data[index] == null) {
+            data[index] = new IndicatorBuffer();
+        }
+
+        return data[index];
     }
 }

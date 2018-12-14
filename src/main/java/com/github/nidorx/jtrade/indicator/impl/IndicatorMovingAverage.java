@@ -1,7 +1,7 @@
 package com.github.nidorx.jtrade.indicator.impl;
 
 import com.github.nidorx.jtrade.indicator.AppliedPrice;
-import com.github.nidorx.jtrade.indicator.Buffer;
+import com.github.nidorx.jtrade.indicator.IndicatorBuffer;
 import com.github.nidorx.jtrade.indicator.Indicator;
 import java.time.Instant;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.DoubleAdder;
  */
 public class IndicatorMovingAverage extends Indicator {
 
-    private final Buffer output;
+    private final IndicatorBuffer output;
 
     private final int period;
 
@@ -35,8 +35,12 @@ public class IndicatorMovingAverage extends Indicator {
         this.period = period;
         this.method = method;
         this.appliedPrice = appliedPrice;
+        this.output = this.getBuffer(0);
+    }
 
-        this.output = this.createBuffer(true);
+    @Override
+    public int getQtdBuffers() {
+        return 1;
     }
 
     @Override

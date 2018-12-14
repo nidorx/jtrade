@@ -1,9 +1,11 @@
 package com.github.nidorx.jtrade.core;
 
+import com.github.nidorx.jtrade.util.function.Cancelable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -21,6 +23,16 @@ import java.util.stream.Stream;
  * @author Alex
  */
 public interface TimeSeries {
+
+    /**
+     * Permite ser informado quando esta Timeseries receber novos valores.
+     *
+     * Se já houver registros, o callback é acionado imediatamente
+     *
+     * @param callback
+     * @return
+     */
+    Cancelable onUpdate(Consumer<Boolean> callback);
 
     /**
      * Retorna a quantidade de registros existentes no timeseries

@@ -5,13 +5,13 @@ package com.github.nidorx.jtrade.indicator;
  *
  * @author Alex
  */
-public class Output {
+public class IndicatorOutput {
 
     public final Double value;
 
     public final Integer color;
 
-    public Output(Double value, Integer color) {
+    public IndicatorOutput(Double value, Integer color) {
         this.value = value;
         this.color = color;
     }
