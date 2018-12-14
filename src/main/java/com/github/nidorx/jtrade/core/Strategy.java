@@ -54,7 +54,7 @@ public abstract class Strategy {
      *
      * @param account Estado inicial da conta de negociação
      */
-    public abstract void initialize(Account account);
+    public abstract void initialize(Account account) throws Exception;
 
     /**
      * Permite executar a estratégia para cada Tick

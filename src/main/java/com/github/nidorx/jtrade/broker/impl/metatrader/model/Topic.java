@@ -3,7 +3,7 @@ package com.github.nidorx.jtrade.broker.impl.metatrader.model;
 import com.github.nidorx.jtrade.core.Account;
 import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.core.Tick;
-import com.github.nidorx.jtrade.util.SDParser;
+import com.github.nidorx.jtrade.util.StringDelimitedParser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -26,7 +26,7 @@ public enum Topic {
      */
     SERVERS(3, (String message) -> {
         final List<Integer> servers = new ArrayList<>();
-        SDParser p = new SDParser(message, '_');
+        StringDelimitedParser p = new StringDelimitedParser(message, '_');
         while (p.hasMore()) {
             servers.add(p.popInt());
         }

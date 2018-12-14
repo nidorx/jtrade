@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.core;
 
-import com.github.nidorx.jtrade.util.SDParser;
+import com.github.nidorx.jtrade.util.StringDelimitedParser;
 import java.time.Instant;
 
 /**
@@ -30,7 +30,7 @@ public class Tick {
      * @param data
      */
     public Tick(String data) {
-        SDParser p = new SDParser(data, ' ');
+        StringDelimitedParser p = new StringDelimitedParser(data, ' ');
         this.symbol = p.pop();
         this.time = Instant.ofEpochMilli(p.popLong());
         this.bid = p.popDouble();

@@ -17,7 +17,7 @@ import com.github.nidorx.jtrade.broker.trading.Position;
 import com.github.nidorx.jtrade.core.Strategy;
 import com.github.nidorx.jtrade.core.TimeFrame;
 import com.github.nidorx.jtrade.core.impl.InstrumentImpl;
-import com.github.nidorx.jtrade.util.SDParser;
+import com.github.nidorx.jtrade.util.StringDelimitedParser;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -108,7 +108,7 @@ public class MetatraderBroker extends Broker {
                 try {
                     // "SYMBOL BASE QUOTE DIGITS CONTRACT_SIZE TICK_VALUE TIME BID ASK STOPS_LEVEL FREEZE_LEVEL"
                     String response = client.exec(Command.SYMBOL);
-                    SDParser p = new SDParser(response, ' ');
+                    StringDelimitedParser p = new StringDelimitedParser(response, ' ');
 
                     String symbol = p.pop();
                     String base = p.pop();

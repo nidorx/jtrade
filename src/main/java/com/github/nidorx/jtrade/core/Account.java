@@ -1,6 +1,6 @@
 package com.github.nidorx.jtrade.core;
 
-import com.github.nidorx.jtrade.util.SDParser;
+import com.github.nidorx.jtrade.util.StringDelimitedParser;
 import java.time.Instant;
 
 /**
@@ -49,7 +49,7 @@ public class Account {
      * @param data
      */
     public Account(String data) {
-        final SDParser p = new SDParser(data, ' ');
+        final StringDelimitedParser p = new StringDelimitedParser(data, ' ');
         this.time = Instant.ofEpochSecond(p.popLong());
         this.currency = p.pop();
         this.leverage = p.popDouble();

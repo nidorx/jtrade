@@ -9,14 +9,14 @@ package com.github.nidorx.jtrade.util;
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-public class SDParser {
+public class StringDelimitedParser {
 
     private int ix;
     private final String src;
     private final char delimiter;
     private String value;
 
-    public SDParser(String src, char delimiter) {
+    public StringDelimitedParser(String src, char delimiter) {
         this.src = src;
         this.delimiter = delimiter;
         this.ix = this.src.indexOf(delimiter);

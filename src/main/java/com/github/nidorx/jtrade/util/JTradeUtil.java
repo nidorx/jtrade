@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Alex Rodin <contato@alexrodin.info>
  */
-public class Util {
+public class JTradeUtil {
 
     public static int between(int min, int max) {
         if (min > max) {
