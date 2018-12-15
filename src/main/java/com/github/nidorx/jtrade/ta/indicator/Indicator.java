@@ -1,7 +1,6 @@
 package com.github.nidorx.jtrade.ta.indicator;
 
 import com.github.nidorx.jtrade.util.function.Cancelable;
-import com.github.nidorx.jtrade.core.TimeSeries;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import com.github.nidorx.jtrade.core.TimeSeriesRate;
 
 /**
  * Representação de um indicador de uma Timeserie
@@ -20,7 +20,7 @@ import java.util.TreeMap;
 public abstract class Indicator {
 
     /**
-     * Permite cancelar o recebimento do {@link TimeSeries#onUpdate(info.alexrodin.lib.Callback) evento de callback}
+     * Permite cancelar o recebimento do {@link TimeSeriesRate#onUpdate(info.alexrodin.lib.Callback) evento de callback}
      */
     private Cancelable cancelListener;
 
@@ -42,7 +42,7 @@ public abstract class Indicator {
     /**
      * O TimeSeries a que este indicador está associado
      */
-    protected TimeSeries timeSeries;
+    protected TimeSeriesRate timeSeries;
 
     /**
      * O ultimos instantes calculados por este indicador.
@@ -81,7 +81,7 @@ public abstract class Indicator {
     /**
      * Remove um handle deste indicador e libera o bloco de cálculo.
      *
-     * Ao fazer isso, este indicador deixa de receber atualizações do {@link TimeSeries} e portanto, não realiza mais
+     * Ao fazer isso, este indicador deixa de receber atualizações do {@link TimeSeriesRate} e portanto, não realiza mais
      * calculos
      */
     public void release() {
@@ -100,14 +100,14 @@ public abstract class Indicator {
     }
 
     /**
-     * Associa este indicador a uma {@link TimeSeries}.
+     * Associa este indicador a uma {@link TimeSeriesRate}.
      *
-     * Após isso, sempre que o {@link TimeSeries} receber novos valores este indicador será informado, e realizará a
+     * Após isso, sempre que o {@link TimeSeriesRate} receber novos valores este indicador será informado, e realizará a
      * computação quando for solicitado o resultado
      *
      * @param ts
      */
-    public void appendTo(final TimeSeries ts) {
+    public void appendTo(final TimeSeriesRate ts) {
         release();
         this.timeSeries = ts;
         cancelListener = ts.onUpdate((addedOldData) -> {

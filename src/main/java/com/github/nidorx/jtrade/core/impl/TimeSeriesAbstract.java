@@ -1,5 +1,6 @@
 package com.github.nidorx.jtrade.core.impl;
 
+import com.github.nidorx.jtrade.core.TimeSeries;
 import com.github.nidorx.jtrade.util.function.Cancelable;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import java.util.stream.StreamSupport;
  * @author Alex Rodin <contato@alexrodin.info>
  * @param <T>
  */
-public abstract class TimeSeriesGeneric<T> {
+public abstract class TimeSeriesAbstract<T> implements TimeSeries<T> {
 
     private final SortedMap<Instant, T> data = Collections.synchronizedSortedMap(new TreeMap<>((a, b) -> {
         // Indice 0 deve ser o valor mais recente
@@ -96,6 +97,7 @@ public abstract class TimeSeriesGeneric<T> {
         });
     }
 
+    @Override
     public Cancelable onUpdate(Consumer<Boolean> callback) {
         callbacks.add(callback);
 
@@ -109,18 +111,22 @@ public abstract class TimeSeriesGeneric<T> {
         };
     }
 
+    @Override
     public int size() {
         return data.size();
     }
 
+    @Override
     public T first() {
         return data.get(data.lastKey());
     }
 
+    @Override
     public T last() {
         return data.get(data.firstKey());
     }
 
+    @Override
     public T one(Instant instant) {
         final Instant closestStart = getClosestStart(instant);
         if (!data.containsKey(closestStart)) {
@@ -129,6 +135,7 @@ public abstract class TimeSeriesGeneric<T> {
         return data.get(closestStart);
     }
 
+    @Override
     public Stream<Map.Entry<Instant, T>> stream() {
         return data.entrySet().stream();
     }
@@ -139,14 +146,17 @@ public abstract class TimeSeriesGeneric<T> {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public List<T> list(int count) {
         return list(0, count);
     }
 
+    @Override
     public List<T> list(Instant stop) {
         return list(Instant.ofEpochSecond(indexedReverse.get(0)), stop);
     }
 
+    @Override
     public List<T> list(int start, int count) {
         if (indexedReverse.size() <= start) {
             return new ArrayList<>();
@@ -154,6 +164,7 @@ public abstract class TimeSeriesGeneric<T> {
         return list(Instant.ofEpochSecond(indexedReverse.get(start)), count);
     }
 
+    @Override
     public List<T> list(Instant start, int count) {
         final Instant closestStart = getClosestStart(start);
 
@@ -164,6 +175,7 @@ public abstract class TimeSeriesGeneric<T> {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public List<T> list(Instant start, Instant stop) {
         final Instant closestStart = getClosestStart(start);
         final Instant closestStop = getClosestStop(stop);
@@ -173,14 +185,17 @@ public abstract class TimeSeriesGeneric<T> {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public Set<Instant> time(int count) {
         return time(0, count);
     }
 
+    @Override
     public Set<Instant> time(Instant stop) {
         return time(data.firstKey(), stop);
     }
 
+    @Override
     public Set<Instant> time(int start, int count) {
         if (indexedReverse.size() <= start) {
             return new HashSet<>();
@@ -188,19 +203,19 @@ public abstract class TimeSeriesGeneric<T> {
         return time(Instant.ofEpochSecond(indexedReverse.get(start)), count);
     }
 
+    @Override
     public Set<Instant> time(Instant start, int count) {
         return data.tailMap(getClosestStart(start)).keySet().stream()
                 .limit(count)
                 .collect(Collectors.toSet());
     }
 
+    @Override
     public Set<Instant> time(Instant start, Instant stop) {
         final Instant closestStart = getClosestStart(start);
         final Instant closestStop = getClosestStop(stop);
 
-        return takeWhile(closestStart, e -> {
-            return !e.getKey().isBefore(closestStop);
-        })
+        return takeWhile(closestStart, e -> !e.getKey().isBefore(closestStop))
                 .map(e -> e.getKey())
                 .collect(Collectors.toSet());
     }

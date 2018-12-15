@@ -88,7 +88,7 @@ public class IndicatorMovingAverage extends Indicator {
         final DoubleAdder sum = new DoubleAdder();
 
         // initial accumulation
-        timeSeries.rates(instant, period).stream().forEach(ohlc -> {
+        timeSeries.list(instant, period).stream().forEach(ohlc -> {
             sum.add(appliedPrice.apply(ohlc));
         });
 

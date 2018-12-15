@@ -9,9 +9,9 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
- * Permite trabalhar com séries temporais de ohlc.
+ * Série temporal genérica
  *
- * A ordenação do {@link TimeSeries} difere de um array de dados comum pela ORDENAÇÃO REVERSA.
+ * A ordenação do {@link TimeSeriesRate} difere de um array de dados comum pela ORDENAÇÃO REVERSA.
  *
  * <p>
  * Os elementos das séries temporais são indexados do final de um array para seu início (a partir do mais recente para o
@@ -20,9 +20,10 @@ import java.util.stream.Stream;
  * <p>
  * Ex.: <code>[...][5][4][3][2][1][0]</code>, onde <code>[0]</code> é o registro mais recente.
  *
- * @author Alex
+ * @author Alex Rodin <contato@alexrodin.info>
+ * @param <T>
  */
-public interface TimeSeries {
+public interface TimeSeries<T> {
 
     /**
      * Permite ser informado quando esta Timeseries receber novos valores.
@@ -46,14 +47,14 @@ public interface TimeSeries {
      *
      * @return
      */
-    Rate first();
+    T first();
 
     /**
      * Obtém a informação de preços e volumes mais recente
      *
      * @return
      */
-    Rate last();
+    T last();
 
     /**
      * Obtém a informação de preços e volumes pra um instante específico, ou null caso não exista valores para o
@@ -62,78 +63,14 @@ public interface TimeSeries {
      * @param instant
      * @return
      */
-    Rate one(Instant instant);
+    T one(Instant instant);
 
     /**
      * Permite acesso ao stream dos registros deste TimeSeries
      *
      * @return
      */
-    Stream<Map.Entry<Instant, Rate>> stream();
-
-    /**
-     * https://www.mql5.com/en/docs/series/copyopen
-     *
-     * @param count
-     * @return
-     */
-    double[] open(int count);
-
-    double[] open(Instant stop);
-
-    double[] open(int start, int count);
-
-    double[] open(Instant start, int count);
-
-    double[] open(Instant start, Instant stop);
-
-    /**
-     * https://www.mql5.com/en/docs/series/copyclose
-     *
-     * @param count
-     * @return
-     */
-    double[] close(int count);
-
-    double[] close(Instant stop);
-
-    double[] close(int start, int count);
-
-    double[] close(Instant start, int count);
-
-    double[] close(Instant start, Instant stop);
-
-    /**
-     * https://www.mql5.com/en/docs/series/copyhigh
-     *
-     * @param count
-     * @return
-     */
-    double[] high(int count);
-
-    double[] high(Instant stop);
-
-    double[] high(int start, int count);
-
-    double[] high(Instant start, int count);
-
-    double[] high(Instant start, Instant stop);
-
-    /**
-     * https://www.mql5.com/en/docs/series/copylow
-     *
-     * @param count
-     * @return
-     */
-    double[] low(int count);
-
-    double[] low(Instant stop);
-
-    double[] low(int start, int count);
-
-    double[] low(Instant start, int count);
-
-    double[] low(Instant start, Instant stop);
+    Stream<Map.Entry<Instant, T>> stream();
 
     /**
      * Gets history data of Rates.
@@ -150,15 +87,15 @@ public interface TimeSeries {
      * @param count
      * @return
      */
-    List<Rate> rates(int count);
+    List<T> list(int count);
 
-    List<Rate> rates(Instant stop);
+    List<T> list(Instant stop);
 
-    List<Rate> rates(int start, int count);
+    List<T> list(int start, int count);
 
-    List<Rate> rates(Instant start, int count);
+    List<T> list(Instant start, int count);
 
-    List<Rate> rates(Instant start, Instant stop);
+    List<T> list(Instant start, Instant stop);
 
     /**
      * https://www.mql5.com/en/docs/series/copytime

@@ -4,11 +4,11 @@ import com.github.nidorx.jtrade.core.Instrument;
 import com.github.nidorx.jtrade.core.Rate;
 import com.github.nidorx.jtrade.core.Tick;
 import com.github.nidorx.jtrade.core.TimeFrame;
-import com.github.nidorx.jtrade.core.TimeSeries;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import com.github.nidorx.jtrade.core.TimeSeriesRate;
 
 /**
  * Implementação para permitir ao Broker gerenciar o instrumento
@@ -17,9 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class InstrumentImpl extends Instrument {
 
-    private final Map<TimeFrame, TimeSeries> timeSeries = new ConcurrentHashMap<>();
+    private final Map<TimeFrame, TimeSeriesRate> timeSeries = new ConcurrentHashMap<>();
 
-    private final TimeSeriesGeneric<Tick> ticks = new TimeSeriesGeneric<Tick>() {
+    private final TimeSeriesAbstract<Tick> ticks = new TimeSeriesAbstract<Tick>() {
         @Override
         public Instant extract(Tick item) {
             return item.time;
@@ -81,7 +81,7 @@ public final class InstrumentImpl extends Instrument {
     }
 
     @Override
-    public TimeSeries timeSeries(TimeFrame timeFrame) {
+    public TimeSeriesRate timeSeries(TimeFrame timeFrame) {
         return timeSeries.get(timeFrame);
     }
 
@@ -113,7 +113,7 @@ public final class InstrumentImpl extends Instrument {
             return;
         }
 
-        ((TimeSeriesImpl) timeSeries.get(rate.timeframe)).add(rate);
+        ((TimeSeriesRateImpl) timeSeries.get(rate.timeframe)).add(rate);
 
         // Após o processamento, salva o timeséries em disco, evita re-consultas ao broker
 //            final String timeSeriesName = getName() + "_" + instrument.getSymbol() + "_" + timeFrame.name();;
@@ -122,7 +122,7 @@ public final class InstrumentImpl extends Instrument {
 
     private void initTimeseries() {
         for (TimeFrame timeframe : TimeFrame.values()) {
-            timeSeries.put(timeframe, new TimeSeriesImpl());
+            timeSeries.put(timeframe, new TimeSeriesRateImpl());
         }
     }
 

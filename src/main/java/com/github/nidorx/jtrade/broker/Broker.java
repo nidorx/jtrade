@@ -30,8 +30,7 @@ public abstract class Broker {
      *
      * Usado nas estratégias e validações temporais.
      *
-     * Importante usar esta informação para garantir a integridade das
-     * estratégias
+     * Importante usar esta informação para garantir a integridade das estratégias
      */
     private Instant serverTime = Instant.EPOCH;
 
@@ -230,11 +229,9 @@ public abstract class Broker {
     /**
      * Registra uma estratégia para ser executada neste contexto.
      *
-     * A estratégia passará a receber atualizações do contexto e executar
-     * transações no Broker deste contexto
+     * A estratégia passará a receber atualizações do contexto e executar transações no Broker deste contexto
      *
-     * Só é permitido uma única estratégia para um Instrumento, afim de evitar
-     * lógicas conflitantes
+     * Só é permitido uma única estratégia para um Instrumento, afim de evitar lógicas conflitantes
      *
      * @param strategy
      * @param symbol
@@ -331,8 +328,8 @@ public abstract class Broker {
     }
 
     /**
-     * Permite ao broker ser informado quando um novo candle é fechado para o
-     * instrumento e frame específico
+     * Permite ao broker ser informado sobre um novo Tick. O Tick é repassado para o Instrumento e para a estratégia
+     * deste ativo
      *
      * @param tick
      */
@@ -363,8 +360,7 @@ public abstract class Broker {
     }
 
     /**
-     * Permite ao broker ser informado quando um novo candle é fechado para o
-     * instrumento e frame específico
+     * Permite ao broker ser informado quando um novo candle é fechado para o instrumento e frame específico
      *
      * @param rate
      * @throws java.lang.Exception
@@ -465,8 +461,7 @@ public abstract class Broker {
 ////                .forEach((t) -> t.add(ohlcs));
 //    }
     /**
-     * Faz o carregamento de uma timeséries que está salva em disco, afim de
-     * evitar rechamadas ao servidores
+     * Faz o carregamento de uma timeséries que está salva em disco, afim de evitar rechamadas ao servidores
      *
      * @param name
      * @param timeSeries

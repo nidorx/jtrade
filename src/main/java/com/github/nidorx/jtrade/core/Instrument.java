@@ -102,7 +102,7 @@ public abstract class Instrument {
      * @param timeframe
      * @return
      */
-    public abstract TimeSeries timeSeries(TimeFrame timeframe);
+    public abstract TimeSeriesRate timeSeries(TimeFrame timeframe);
 
     /**
      * Obtém os ticks disponíveis deste instrumento
